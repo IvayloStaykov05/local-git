@@ -1,10 +1,13 @@
 package com.example.project.backend.entity;
 
-import com.example.project.backend.entity.enums.RoleEnum;
+import com.example.project.backend.entity.enums.SystemRole;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Getter
 @Setter
@@ -15,14 +18,8 @@ import java.util.Set;
 @Table(name = "users")
 public class User extends BaseEntity{
 
-    @Column
+    @Column(nullable = false, unique = true, length = 100)
     private String username;
-
-    @Column
-    private String password;
-
-    @Column
-    private String email;
 
     @Column(name = "first_name")
     private String firstName;
@@ -30,12 +27,52 @@ public class User extends BaseEntity{
     @Column(name = "last_name")
     private String lastName;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles;
+    @Column(nullable = false, unique = true, length = 150)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private SystemRole systemRole = SystemRole.USER;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "createdBy")
+    @Builder.Default
+    private List<Document> createdDocuments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    @Builder.Default
+    private List<DocumentMember> memberships = new ArrayList<>();
+
+    @OneToMany(mappedBy = "createdBy")
+    @Builder.Default
+    private List<DocumentVersion> createdVersions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "approvedBy")
+    @Builder.Default
+    private List<DocumentVersion> approvedVersions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    @Builder.Default
+    private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "addedBy")
+    @Builder.Default
+    private List<DocumentMember> addedMembers = new ArrayList<>();
+
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (systemRole == null) {
+            systemRole = SystemRole.USER;
+        }
+    }
 
 }
