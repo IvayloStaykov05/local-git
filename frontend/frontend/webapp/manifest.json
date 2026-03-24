@@ -33,12 +33,18 @@
     }
   },
   "sap.ui5": {
-    "flexEnabled": true,
+    "rootView": {
+      "viewName": "com.example.project.frontend.frontend.view.App",
+      "type": "XML",
+      "id": "App",
+      "async": true
+    },
     "dependencies": {
-      "minUI5Version": "1.145.0",
+      "minUI5Version": "1.120.0",
       "libs": {
         "sap.m": {},
-        "sap.ui.core": {}
+        "sap.ui.core": {},
+        "sap.ui.layout": {}
       }
     },
     "contentDensities": {
@@ -63,36 +69,34 @@
     "routing": {
       "config": {
         "routerClass": "sap.m.routing.Router",
-        "controlAggregation": "pages",
         "controlId": "app",
-        "transition": "slide",
-        "type": "View",
+        "controlAggregation": "pages",
         "viewType": "XML",
-        "path": "com.example.project.frontend.frontend.view",
-        "async": true,
-        "viewPath": "com.example.project.frontend.frontend.view"
+        "viewPath": "com.example.project.frontend.frontend.view",
+        "async": true
       },
       "routes": [
         {
-          "name": "RouteView1",
-          "pattern": ":?query:",
-          "target": [
-            "TargetView1"
-          ]
+          "name": "RouteLogin",
+          "pattern": "",
+          "target": "TargetLogin"
+        },
+        {
+          "name": "RouteRegister",
+          "pattern": "register",
+          "target": "TargetRegister"
         }
       ],
       "targets": {
-        "TargetView1": {
-          "id": "View1",
-          "name": "View1"
+        "TargetLogin": {
+          "viewName": "Login",
+          "viewId": "Login"
+        },
+        "TargetRegister": {
+          "viewName": "Register",
+          "viewId": "Register"
         }
       }
-    },
-    "rootView": {
-      "viewName": "com.example.project.frontend.frontend.view.App",
-      "type": "XML",
-      "id": "App",
-      "async": true
     }
   }
 }

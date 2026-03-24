@@ -1,7 +1,7 @@
-<mvc:View controllerName="com.example.project.frontend.frontend.controller.App"
+<mvc:View
+    controllerName="com.example.project.frontend.frontend.controller.App"
     displayBlock="true"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m">
-    <App id="app">
-    </App>
+    <App id="app" />
 </mvc:View>

@@ -1,0 +1,62 @@
+<mvc:View
+    id="registerView"
+    controllerName="com.example.project.frontend.frontend.controller.Register"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m">
+
+    <Page id="registerPage" showHeader="false" enableScrolling="false" class="authPage">
+        <content>
+                <VBox 
+                    id="registerWrapper" 
+                    class="authWrapper" 
+                    justifyContent="Center" 
+                    alignItems="Center" 
+                    width="100%" 
+                    height="100%">                
+                    <VBox 
+                        id="registerCard" 
+                        class="authCard authRegisterCard">
+                    <Title id="registerTitle" text="{i18n>registerTitle}" class="authTitle" textAlign="Center" width="100%" />
+                    <VBox id="registerForm" class="authForm">
+                        <Label id="registerFullNameLabel" text="{i18n>fullName}" class="authLabel" />
+                        <Input
+                            id="registerFullNameInput"
+                            placeholder="{i18n>fullNamePlaceholder}"
+                            class="authInput" />
+
+                        <Label id="registerEmailLabel" text="{i18n>email}" class="authLabel authLabelSpacing" />
+                        <Input
+                            id="registerEmailInput"
+                            type="Email"
+                            placeholder="{i18n>emailPlaceholder}"
+                            class="authInput" />
+
+                        <Label id="registerUsernameLabel" text="{i18n>username}" class="authLabel authLabelSpacing" />
+                        <Input
+                            id="registerUsernameInput"
+                            placeholder="{i18n>usernamePlaceholder}"
+                            class="authInput" />
+
+                        <Label id="registerPasswordLabel" text="{i18n>password}" class="authLabel authLabelSpacing" />
+                        <Input
+                            id="registerPasswordInput"
+                            type="Password"
+                            placeholder="{i18n>passwordPlaceholder}"
+                            class="authInput" />
+
+                        <Button
+                            id="registerButton"
+                            text="{i18n>createAccount}"
+                            press=".onRegister"
+                            class="authPrimaryButton authRegisterButton" />
+                    </VBox>
+
+                    <VBox id="registerBottomSection" class="authBottomSection" alignItems="Center">
+                        <Text id="registerBottomText" text="{i18n>alreadyHaveAccount}" class="authMutedText" />
+                        <Link id="backToLoginLink" text="{i18n>backToLogin}" press=".onGoToLogin" class="authBottomLink" />
+                    </VBox>
+                </VBox>
+            </VBox>
+        </content>
+    </Page>
+</mvc:View>

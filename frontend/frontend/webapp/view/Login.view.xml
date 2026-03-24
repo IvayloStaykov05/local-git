@@ -1,0 +1,63 @@
+<mvc:View
+    id="loginView"
+    controllerName="com.example.project.frontend.frontend.controller.Login"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m">
+
+    <Page id="loginPage" showHeader="false" enableScrolling="false" class="authPage">
+        <content>
+                <VBox 
+                    id="loginWrapper" 
+                    class="authWrapper" 
+                    justifyContent="Center" 
+                    alignItems="Center" 
+                    width="100%" 
+                    height="100%">                
+                    <VBox 
+                        id="loginCard" 
+                        class="authCard">
+                    <Title id="loginTitle" text="{i18n>loginTitle}" class="authTitle" textAlign="Center" width="100%" />
+                    <VBox id="loginForm" class="authForm">
+                        <Label id="loginUsernameLabel" text="{i18n>username}" class="authLabel" />
+                        <Input
+                            id="loginUsernameInput"
+                            placeholder="{i18n>usernamePlaceholder}"
+                            class="authInput" />
+
+                        <Label id="loginPasswordLabel" text="{i18n>password}" class="authLabel authLabelSpacing" />
+                        <Input
+                            id="loginPasswordInput"
+                            type="Password"
+                            placeholder="{i18n>passwordPlaceholder}"
+                            class="authInput" />
+
+                        <HBox id="forgotRow" justifyContent="End" class="authForgotRow">
+                            <Link id="forgotLink" text="{i18n>forgotPassword}" press=".onForgotPassword" class="authForgotLink" />
+                        </HBox>
+
+                        <Button
+                            id="loginButton"
+                            text="{i18n>loginButton}"
+                            press=".onLogin"
+                            class="authPrimaryButton" />
+                    </VBox>
+
+                    <VBox id="socialSection" class="authSocialSection" alignItems="Center">
+                        <Text id="socialText" text="{i18n>orSignUpUsing}" class="authMutedText" />
+
+                        <HBox id="socialButtonsRow" class="socialButtonsRow" justifyContent="Center">
+                            <Button id="facebookButton" text="f" type="Transparent" class="socialButton facebookButton" />
+                            <Button id="twitterButton" text="t" type="Transparent" class="socialButton twitterButton" />
+                            <Button id="googleButton" text="G" type="Transparent" class="socialButton googleButton" />
+                        </HBox>
+                    </VBox>
+
+                    <VBox id="bottomSection" class="authBottomSection" alignItems="Center">
+                        <Text id="bottomText" text="{i18n>orSignUpUsing}" class="authMutedText" />
+                        <Link id="signUpLink" text="{i18n>signUp}" press=".onGoToRegister" class="authBottomLink" />
+                    </VBox>
+                </VBox>
+            </VBox>
+        </content>
+    </Page>
+</mvc:View>

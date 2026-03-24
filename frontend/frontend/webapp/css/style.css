@@ -1,1 +1,261 @@
-/* Enter your custom styles here */
+html,
+body,
+.sapUiBody,
+#content,
+#container,
+#container-uiarea {
+    height: 100%;
+    margin: 0;
+}
+
+.authPage,
+.authPage .sapMPage,
+.authPage .sapMPageCont,
+.authPage .sapMPageEnableScrolling,
+.authPage .sapMPageScroll {
+    height: 100%;
+}
+
+.authPage {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)),
+        url("../img/login-bg.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.authPage .sapMPageCont,
+.authPage .sapMPageScroll,
+.authPage .sapMPageEnableScrolling {
+    height: 100% !important;
+}
+
+.authPage .sapMPageCont {
+    display: flex;
+}
+
+.authWrapper {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 32px 16px;
+    box-sizing: border-box;
+}
+
+.authCard {
+    width: 100%;
+    max-width: 460px;
+    min-height: 640px;
+    background: rgba(255, 255, 255, 0.60);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 18px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    padding: 40px 38px 34px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.authRegisterCard {
+    min-height: 700px;
+}
+
+.authTitle {
+    width: 100%;
+    text-align: center;
+    font-size: 2.15rem;
+    font-weight: 700;
+    color: #111111;
+    margin-bottom: 18px;
+}
+
+.authForm {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.authLabel {
+    color: #404040;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+}
+
+.authLabelSpacing {
+    margin-top: 14px;
+}
+
+.authInput {
+    margin-bottom: 0;
+}
+
+.authInput .sapMInputBaseContentWrapper,
+.authInput .sapMInputBaseContentWrapper:hover,
+.authInput.sapMInputBaseFocused .sapMInputBaseContentWrapper,
+.authInput.sapMFocus .sapMInputBaseContentWrapper,
+.authInput.sapMFocused .sapMInputBaseContentWrapper {
+    border: none !important;
+    border-bottom: 1px solid #d8d8d8 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    padding-left: 0 !important;
+}
+
+.authInput .sapMInputBaseContentWrapper::before,
+.authInput .sapMInputBaseContentWrapper::after,
+.authInput.sapMInputBaseFocused .sapMInputBaseContentWrapper::before,
+.authInput.sapMInputBaseFocused .sapMInputBaseContentWrapper::after,
+.authInput.sapMFocus .sapMInputBaseContentWrapper::before,
+.authInput.sapMFocus .sapMInputBaseContentWrapper::after,
+.authInput.sapMFocused .sapMInputBaseContentWrapper::before,
+.authInput.sapMFocused .sapMInputBaseContentWrapper::after {
+    display: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    content: none !important;
+}
+
+.authInput input,
+.authInput .sapMInputBaseInner,
+.authInput .sapMInputBaseInner:focus,
+.authInput input:focus {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    font-style: italic;
+    color: #666666;
+    padding-left: 0 !important;
+}
+
+.authInput.sapMInputBaseFocused,
+.authInput.sapMFocus,
+.authInput.sapMFocused {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.authForgotRow {
+    margin-top: 10px;
+    margin-bottom: 24px;
+}
+
+.authForgotLink {
+    color: #666666 !important;
+    font-size: 0.95rem;
+    text-decoration: none !important;
+}
+
+.authPrimaryButton {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.authPrimaryButton .sapMBtnInner {
+    border: none !important;
+    border-radius: 999px !important;
+    height: 48px !important;
+    background: linear-gradient(90deg, #56d7d9 0%, #d83bf2 100%) !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+
+.authPrimaryButton .sapMBtnContent {
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 48px !important;
+}
+
+.authPrimaryButton:focus,
+.authPrimaryButton .sapMBtnInner:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.authSocialSection {
+    margin-top: 28px;
+}
+
+.authMutedText {
+    color: #666666;
+    font-size: 0.98rem;
+    margin-bottom: 14px;
+}
+
+.socialButtonsRow {
+    gap: 14px;
+}
+
+.socialButton {
+    width: 50px;
+    height: 50px;
+    min-width: 50px !important;
+    padding: 0 !important;
+}
+
+.socialButton .sapMBtnInner {
+    width: 50px !important;
+    min-width: 50px !important;
+    height: 50px !important;
+    border-radius: 50% !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.socialButton .sapMBtnContent {
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 1.4rem;
+    line-height: 50px !important;
+}
+
+.facebookButton .sapMBtnInner {
+    background: #3b5998 !important;
+}
+
+.twitterButton .sapMBtnInner {
+    background: #2da1f2 !important;
+}
+
+.googleButton .sapMBtnInner {
+    background: #ea4335 !important;
+}
+
+.authBottomSection {
+    margin-top: 26px;
+}
+
+.authBottomLink {
+    color: #111111 !important;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none !important;
+    margin-top: 4px;
+}
+
+.authRegisterButton {
+    margin-top: 24px;
+}
+
+@media (max-width: 640px) {
+    .authWrapper {
+        padding: 20px 12px;
+    }
+
+    .authCard,
+    .authRegisterCard {
+        max-width: 100%;
+        min-height: auto;
+        padding: 28px 22px 24px;
+    }
+
+    .authTitle {
+        font-size: 1.9rem;
+    }
+}
