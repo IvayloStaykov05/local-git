@@ -1,6 +1,7 @@
 package com.example.project.backend.controller;
 
 import com.example.project.backend.config.JwtService;
+import com.example.project.backend.dto.request.user.ForgotPasswordRequest;
 import com.example.project.backend.dto.request.user.UserLoginRequest;
 import com.example.project.backend.dto.request.user.UserRegisterRequest;
 import com.example.project.backend.dto.response.user.UserLoginResponse;
@@ -66,5 +67,13 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(
+            @RequestBody @Valid ForgotPasswordRequest request
+    ) {
+        String message = userService.forgotPassword(request);
+        return ResponseEntity.ok(message);
     }
 }

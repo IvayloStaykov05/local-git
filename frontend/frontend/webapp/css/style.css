@@ -259,3 +259,114 @@ body,
         font-size: 1.9rem;
     }
 }
+.forgotPasswordDialog {
+    border-radius: 1.5rem;
+}
+
+.forgotPasswordDialog .sapMDialogSection {
+    background: linear-gradient(
+        135deg,
+        rgba(235, 242, 248, 0.92),
+        rgba(221, 233, 245, 0.82),
+        rgba(235, 219, 244, 0.78)
+    );
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.forgotPasswordDialog .sapMDialogTitleGroup {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border-bottom: 1px solid rgba(120, 140, 170, 0.18);
+}
+
+.forgotPasswordDialog .sapMDialogTitle {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #22324a;
+}
+
+.forgotPasswordContent {
+    padding: 2rem 2rem 1.5rem 2rem;
+    min-height: 26rem;
+    box-sizing: border-box;
+}
+
+.forgotPasswordSubtitle {
+    color: #60738a;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+}
+
+.forgotPasswordFieldGroup {
+    margin-bottom: 2rem;
+}
+
+.forgotPasswordLabel {
+    display: block;
+    color: #4a6078;
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+    margin-left: 0.4rem;
+    font-weight: 600;
+}
+
+.forgotPasswordInput {
+    width: 100%;
+}
+
+.forgotPasswordInput .sapMInputBaseContentWrapper {
+    height: 3.35rem !important;
+    min-height: 3.35rem !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    overflow: hidden !important;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 8px 20px rgba(92, 112, 145, 0.10);
+    border: none !important;
+}
+
+.forgotPasswordInput .sapMInputBaseInner {
+    height: 100% !important;
+    line-height: 3.35rem !important;
+    border: none !important;
+    outline: none !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    color: #324861 !important;
+    font-size: 0.98rem;
+    font-style: italic;
+    padding: 0 1.1rem !important;
+    box-shadow: none !important;
+}
+
+.forgotPasswordInput .sapMInputBaseInner::placeholder {
+    color: #6a7f96;
+    opacity: 1;
+}
+
+.forgotPasswordDialog .sapMDialogFooter {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-top: 1px solid rgba(120, 140, 170, 0.15);
+}
+
+.forgotPasswordCancelButton .sapMBtnInner {
+    background: transparent !important;
+    border: none !important;
+    color: #2f6fb7 !important;
+    font-weight: 600;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+.forgotPasswordSubmitButton .sapMBtnInner {
+    border: none !important;
+    border-radius: 999px !important;
+    background: linear-gradient(90deg, #56ccf2 0%, #7b7dff 50%, #d946ef 100%) !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    min-width: 11rem;
+    box-shadow: 0 10px 24px rgba(155, 82, 239, 0.28);
+}

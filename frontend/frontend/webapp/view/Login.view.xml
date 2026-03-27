@@ -53,7 +53,6 @@
                     </VBox>
 
                     <VBox id="bottomSection" class="authBottomSection" alignItems="Center">
-                        <Text id="bottomText" text="{i18n>orSignUpUsing}" class="authMutedText" />
                         <Link id="signUpLink" text="{i18n>signUp}" press=".onGoToRegister" class="authBottomLink" />
                     </VBox>
                 </VBox>
