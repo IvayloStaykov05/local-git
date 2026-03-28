@@ -33,6 +33,15 @@ sap.ui.define([
 
         _loadDashboard: async function () {
             var sToken = localStorage.getItem("token");
+            var oStoredUser;
+            var sStoredUsername = "";
+
+            try {
+                oStoredUser = JSON.parse(localStorage.getItem("user") || "{}");
+                sStoredUsername = oStoredUser.username || oStoredUser.email || "";
+            } catch (e) {
+                sStoredUsername = "";
+            }
 
             try {
                 const oResponse = await fetch("http://localhost:8080/api/dashboard", {
@@ -57,12 +66,16 @@ sap.ui.define([
                 }
 
                 var oData = sText ? JSON.parse(sText) : {};
+                var oMyInfo = oData.myInfo || {};
 
                 this.getView().getModel("dashboard").setData({
-                    myInfo: oData.myInfo || {},
-                    myDocuments: oData.myDocuments || [],
-                    peopleWithWork: oData.peopleWithWork || [],
-                    notifications: oData.notifications || []
+                    myInfo: {
+                        username: oMyInfo.username || sStoredUsername || "User",
+                        email: oMyInfo.email || oStoredUser.email || "",
+                    },
+                    myDocuments: Array.isArray(oData.myDocuments) ? oData.myDocuments : [],
+                    peopleWithWork: Array.isArray(oData.peopleWithWork) ? oData.peopleWithWork : [],
+                    notifications: Array.isArray(oData.notifications) ? oData.notifications : []
                 });
 
             } catch (oError) {

@@ -8,31 +8,36 @@
         <content>
             <VBox class="dashboardShell" width="100%">
 
-                <HBox class="dashboardTopBar" justifyContent="SpaceBetween" alignItems="Center">
+                <HBox class="dashboardTopBar" alignItems="Center" justifyContent="SpaceBetween">
                     <HBox alignItems="Center" class="dashboardBrandBox">
                         <VBox class="dashboardBrandIcon"></VBox>
                         <Title text="{i18n>dashboardBrand}" class="dashboardBrandTitle" />
                     </HBox>
 
-                    <HBox class="dashboardSearchBox" alignItems="Center">
-                        <core:Icon src="sap-icon://search" class="dashboardSearchIcon" />
-                        <Input
-                            placeholder="{i18n>dashboardSearchPlaceholder}"
-                            class="dashboardSearchInput"
-                            submit=".onSearchDashboard" />
+                    <HBox class="dashboardSearchWrapper" alignItems="Center" justifyContent="Center">
+                        <HBox class="dashboardSearchBox" alignItems="Center">
+                            <core:Icon src="sap-icon://search" class="dashboardSearchIcon" />
+                                <Input
+                                    placeholder="{i18n>dashboardSearchPlaceholder}"
+                                    class="dashboardSearchInput"
+                                    submit=".onSearchDashboard" />
+                        </HBox>
                     </HBox>
 
-                    <Button
-                        text="{i18n>logout}"
-                        press=".onLogout"
-                        class="dashboardLogoutButton" />
+                    <HBox class="dashboardLogoutWrapper" alignItems="Center" justifyContent="End">
+                        <Button
+                            text="{i18n>logout}"
+                            press=".onLogout"
+                            class="dashboardLogoutButton" />
+                    </HBox>
+
                 </HBox>
 
                 <HBox class="dashboardContent" justifyContent="SpaceBetween" alignItems="Stretch">
 
                     <VBox class="dashboardColumn dashboardColumnLeft">
                         <VBox class="glassCard profileCard">
-                            <Title text="{dashboard>/myInfo/username}" class="sectionMainTitle" />
+                            <Text text="{dashboard>/myInfo/username}" class="dashboardUsername" />
 
                             <VBox class="innerGlassCard profileInnerCard">
                                 <HBox justifyContent="SpaceBetween" alignItems="Center">
@@ -48,7 +53,6 @@
                                     class="innerScrollContainer">
                                     <VBox class="profileInfoBox">
                                         <Text text="Email: {dashboard>/myInfo/email}" class="profileInfoText" />
-                                        <Text text="Role: {dashboard>/myInfo/systemRole}" class="profileInfoText" />
                                     </VBox>
                                 </ScrollContainer>
                             </VBox>
@@ -92,10 +96,13 @@
                                     </List>
                                 </ScrollContainer>
 
-                                <Button
-                                    text="{i18n>newDocument}"
-                                    press=".onCreateDocument"
-                                    class="newDocumentButton" />
+                                <VBox class="newDocumentFooter">
+                                    <Button
+                                        text="{i18n>newDocument}"
+                                        press=".onCreateDocument"
+                                        width="100%"
+                                        class="newDocumentButton" />
+                                </VBox>
                             </VBox>
                         </VBox>
                     </VBox>
@@ -158,18 +165,6 @@
                                 horizontal="false"
                                 class="notificationsScroll">
                                 <VBox class="notificationListBox">
-                                    <VBox
-                                        class="notificationCard"
-                                        visible="{= ${dashboard>/notifications}.length > 0 }">
-                                        <items>
-                                            <VBox
-                                                class="notificationItemBox"
-                                                visible="true"
-                                                binding="{dashboard>/notifications}">
-                                            </VBox>
-                                        </items>
-                                    </VBox>
-
                                     <List
                                         items="{dashboard>/notifications}"
                                         class="notificationList"

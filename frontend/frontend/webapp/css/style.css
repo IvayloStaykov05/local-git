@@ -248,7 +248,6 @@ body,
 .authRegisterButton {
     margin-top: 24px;
 }
-
 .dashboardPage,
 .dashboardPage .sapMPage,
 .dashboardPage .sapMPageCont,
@@ -261,7 +260,7 @@ body,
 .dashboardPage {
     position: relative;
     background-image:
-        linear-gradient(rgba(20, 15, 80, 0.35), rgba(20, 15, 80, 0.45)),
+        linear-gradient(rgba(22, 16, 78, 0.14), rgba(22, 16, 78, 0.20)),
         url("../img/login-bg.jpg");
     background-size: cover;
     background-position: center;
@@ -279,9 +278,9 @@ body,
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(circle at 18% 72%, rgba(255, 0, 204, 0.20), transparent 24%),
-        radial-gradient(circle at 68% 28%, rgba(0, 217, 255, 0.18), transparent 26%),
-        radial-gradient(circle at 82% 62%, rgba(137, 87, 255, 0.22), transparent 30%);
+        radial-gradient(circle at 20% 78%, rgba(255, 0, 212, 0.10), transparent 24%),
+        radial-gradient(circle at 67% 30%, rgba(63, 220, 255, 0.10), transparent 26%),
+        radial-gradient(circle at 86% 62%, rgba(148, 96, 255, 0.10), transparent 30%);
     pointer-events: none;
     z-index: 0;
 }
@@ -291,60 +290,86 @@ body,
     z-index: 1;
     height: 100%;
     width: 100%;
-    padding: 24px 24px 20px;
+    padding: 24px 28px 20px;
     box-sizing: border-box;
-    gap: 18px;
+    gap: 20px;
 }
 
 .dashboardTopBar {
-    min-height: 72px;
-    gap: 18px;
-    padding: 14px 18px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.30);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    min-height: 76px;
+    padding: 16px 24px;
+    border-radius: 24px;
+    background: rgba(236, 233, 255, 0.24);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.22);
     box-shadow:
-        0 20px 40px rgba(16, 12, 60, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+        0 14px 28px rgba(28, 19, 94, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.24);
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
 }
 
 .dashboardBrandBox {
-    min-width: 210px;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
     gap: 12px;
+    flex-shrink: 0;
 }
 
 .dashboardBrandIcon {
     width: 22px;
     height: 22px;
     border-radius: 7px;
-    background: linear-gradient(135deg, #79a2ff 0%, #8b65ff 100%);
-    box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.46);
+    background: linear-gradient(135deg, #9bb4ff 0%, #7d5cff 100%);
+    box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.45);
 }
 
 .dashboardBrandTitle {
-    color: #1f1d54 !important;
-    font-size: 1.7rem !important;
+    color: #241f5e !important;
+    font-size: 1.6rem !important;
     font-weight: 800 !important;
 }
 
-.dashboardSearchBox {
+.dashboardCenterArea {
     flex: 1;
-    max-width: 520px;
-    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+}
+
+.dashboardRightArea {
+    min-width: 120px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.dashboardSearchWrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+}
+
+.dashboardSearchBox {
+    width: 100%;
+    max-width: 620px;
+    height: 46px;
     padding: 0 14px;
-    border-radius: 14px;
-    background: rgba(196, 188, 255, 0.38);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(220, 220, 235, 0.95);
+    box-shadow: none !important;
 }
 
 .dashboardSearchIcon {
-    color: #3f396f;
-    font-size: 1.2rem;
+    color: #5d5a78;
+    font-size: 1.1rem;
     margin-right: 10px;
 }
 
@@ -352,36 +377,58 @@ body,
     flex: 1;
 }
 
-.dashboardSearchInput .sapMInputBaseContentWrapper {
-    background: transparent !important;
-    border: none !important;
+.dashboardSearchInput,
+.dashboardSearchInput.sapMInputBase,
+.dashboardSearchInput .sapMInputBaseContentWrapper,
+.dashboardSearchInput .sapMInputBaseContentWrapper:hover,
+.dashboardSearchInput.sapMInputBaseFocused .sapMInputBaseContentWrapper,
+.dashboardSearchInput.sapMFocus .sapMInputBaseContentWrapper,
+.dashboardSearchInput.sapMFocused .sapMInputBaseContentWrapper {
+    outline: none !important;
     box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
 }
 
-.dashboardSearchInput .sapMInputBaseInner {
-    background: transparent !important;
-    border: none !important;
+.dashboardSearchInput input,
+.dashboardSearchInput input:focus,
+.dashboardSearchInput .sapMInputBaseInner,
+.dashboardSearchInput .sapMInputBaseInner:focus {
+    outline: none !important;
     box-shadow: none !important;
-    color: #352f66 !important;
-    font-size: 1.1rem !important;
+    border: none !important;
+    background: transparent !important;
+    color: #37345a !important;
+    font-size: 1rem !important;
+    font-style: normal !important;
+    padding-left: 0 !important;
 }
 
 .dashboardSearchInput input::placeholder {
-    color: #4a4473 !important;
+    color: #777490 !important;
     opacity: 1;
+    font-style: normal;
 }
 
 .dashboardLogoutButton {
+    flex-shrink: 0;
+    margin: 0 !important;
+}
+
+.dashboardLogoutWrapper {
+    min-width: 150px;
+    display: flex;
+    justify-content: flex-end;
     flex-shrink: 0;
 }
 
 .dashboardLogoutButton .sapMBtnInner {
     border: none !important;
-    border-radius: 14px !important;
+    border-radius: 18px !important;
     min-width: 128px !important;
     height: 48px !important;
-    background: linear-gradient(90deg, #7a5cff 0%, #5a3ff0 100%) !important;
-    box-shadow: 0 10px 25px rgba(90, 63, 240, 0.40) !important;
+    background: linear-gradient(90deg, #7d5cff 0%, #6a43ff 100%) !important;
+    box-shadow: 0 8px 18px rgba(90, 63, 240, 0.26) !important;
 }
 
 .dashboardLogoutButton .sapMBtnContent {
@@ -394,14 +441,14 @@ body,
 .dashboardContent {
     flex: 1;
     min-height: 0;
-    gap: 24px;
+    gap: 20px;
     align-items: stretch !important;
 }
 
 .dashboardColumn {
     height: 100%;
     min-height: 0;
-    gap: 24px;
+    gap: 20px;
 }
 
 .dashboardColumnLeft {
@@ -410,25 +457,25 @@ body,
 }
 
 .dashboardColumnCenter {
-    width: 40%;
-    min-width: 360px;
+    width: 41%;
+    min-width: 380px;
 }
 
 .dashboardColumnRight {
-    width: 35%;
+    width: 34%;
     min-width: 320px;
 }
 
 .glassCard {
-    background: rgba(255, 255, 255, 0.26);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 26px;
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 28px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     box-shadow:
-        0 22px 48px rgba(0, 0, 0, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.34);
-    padding: 18px;
+        0 14px 30px rgba(24, 16, 78, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    padding: 20px;
     box-sizing: border-box;
     min-height: 0;
 }
@@ -452,31 +499,41 @@ body,
     min-height: 0;
 }
 
+.dashboardUsername {
+    color: #201b56 !important;
+    font-size: 1.45rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 16px !important;
+    padding-left: 6px;
+}
+
 .innerGlassCard {
-    margin-top: 18px;
     flex: 1;
     min-height: 0;
-    padding: 18px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    padding: 20px 18px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .sectionMainTitle {
-    color: #201d54 !important;
-    font-size: 1.35rem !important;
+    color: #211d58 !important;
+    font-size: 1.25rem !important;
     font-weight: 800 !important;
 }
 
 .sectionSubTitle {
-    color: #2d2860 !important;
-    font-size: 1.1rem !important;
+    color: #2a255f !important;
+    font-size: 1.05rem !important;
     font-weight: 700 !important;
 }
 
 .dotsText {
-    font-size: 1.2rem;
-    color: #5540b0;
+    font-size: 1.25rem;
+    color: #7056eb;
     font-weight: 700;
 }
 
@@ -496,9 +553,9 @@ body,
 }
 
 .profileInfoBox {
-    margin-top: 20px;
-    gap: 16px;
-    padding-right: 4px;
+    margin-top: 18px;
+    gap: 18px;
+    padding-right: 6px;
 }
 
 .profileInfoText {
@@ -510,10 +567,15 @@ body,
 .documentsContentArea {
     flex: 1;
     min-height: 0;
-    margin-top: 12px;
+    margin-top: 14px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    padding-bottom: 20px;
+}
+
+.documentsScroll {
+    flex: 1;
+    min-height: 0;
 }
 
 .dashboardList,
@@ -538,19 +600,19 @@ body,
     margin-bottom: 14px;
     padding: 18px 20px;
     border-radius: 20px;
-    background: rgba(238, 243, 255, 0.42);
-    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.24),
-        0 8px 16px rgba(34, 24, 92, 0.10);
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 8px 18px rgba(34, 24, 92, 0.06);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .listGlassItem:hover {
     transform: translateY(-2px);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.24),
-        0 14px 24px rgba(34, 24, 92, 0.18);
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 10px 20px rgba(34, 24, 92, 0.10);
 }
 
 .listItemTitle {
@@ -560,9 +622,9 @@ body,
 }
 
 .listItemSubtitle {
-    margin-top: 4px;
-    color: #5a5679 !important;
-    font-size: 0.96rem !important;
+    margin-top: 6px;
+    color: #615d86 !important;
+    font-size: 0.94rem !important;
 }
 
 .itemArrowButton {
@@ -577,28 +639,55 @@ body,
 }
 
 .itemArrowButton .sapMBtnContent {
-    color: #604ac5 !important;
-    font-size: 1.9rem !important;
+    color: #644fe0 !important;
+    font-size: 1.8rem !important;
     font-weight: 400 !important;
 }
 
-.newDocumentButton {
-    width: 100%;
+newDocumentFooter.newDocumentFooter {
+    margin-top: 14px;
     flex-shrink: 0;
+    width: calc(100% + 40px);
+    margin-left: -20px;
+    margin-right: -20px;
+    margin-bottom: -20px;
+    padding-top: 10px;
+    min-height: 78px;
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+    overflow: hidden;
+    border-radius: 0 0 28px 28px;
+}
+
+.newDocumentButton {
+    width: 100% !important;
+    display: block;
+    margin: 0 !important;
 }
 
 .newDocumentButton .sapMBtnInner {
+    width: 100% !important;
+    min-width: 100% !important;
     border: none !important;
-    border-radius: 0 0 20px 20px !important;
-    min-height: 62px !important;
-    background: rgba(198, 190, 255, 0.24) !important;
+    border-radius: 0 0 28px 28px !important;
+    height: 60px !important;
+    min-height: 60px !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    box-shadow: none !important;
 }
 
 .newDocumentButton .sapMBtnContent {
-    color: #1f1d54 !important;
-    font-size: 1rem !important;
+    display: block !important;
+    width: 100% !important;
+    color: #201d54 !important;
+    font-size: 1.02rem !important;
     font-weight: 700 !important;
-    line-height: 62px !important;
+    line-height: 60px !important;
+    text-align: center !important;
+}
+
+.newDocumentButton:hover .sapMBtnInner,
+.newDocumentButton .sapMBtnInner:hover {
+    background: rgba(255, 255, 255, 0.24) !important;
 }
 
 .personItem {
@@ -610,8 +699,8 @@ body,
 }
 
 .personAvatar.sapFAvatar {
-    background: rgba(198, 228, 255, 0.92) !important;
-    color: #1a64d7 !important;
+    background: rgba(110, 165, 255, 0.22) !important;
+    color: #2b6edb !important;
 }
 
 .personTextBox {
@@ -628,13 +717,13 @@ body,
     margin-bottom: 12px;
     padding: 16px 18px;
     border-radius: 18px;
-    background: rgba(238, 243, 255, 0.24);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     gap: 12px;
 }
 
 .notificationRowIcon {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     margin-top: 2px;
 }
 
@@ -654,16 +743,16 @@ body,
 .notificationEmptyState {
     flex: 1;
     min-height: 100%;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     padding: 24px;
     text-align: center;
 }
 
 .notificationIcon {
-    font-size: 2.3rem;
-    color: #4f3ca8;
+    font-size: 2.4rem;
+    color: #6550de;
     margin-bottom: 12px;
 }
 
@@ -671,13 +760,6 @@ body,
     color: #3b356c !important;
     font-size: 1.05rem !important;
     text-align: center;
-}
-
-.innerScrollContainer::-webkit-scrollbar,
-.documentsScroll::-webkit-scrollbar,
-.peopleScroll::-webkit-scrollbar,
-.notificationsScroll::-webkit-scrollbar {
-    width: 8px;
 }
 
 @media (max-width: 1200px) {
@@ -700,6 +782,25 @@ body,
     .dashboardShell {
         height: auto;
         min-height: 100%;
+    }
+
+    .dashboardTopBar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .dashboardCenterArea {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .dashboardSearchWrapper {
+        width: 100%;
+        flex: 1 1 auto;
+    }
+
+    .dashboardSearchBox {
+        max-width: 100%;
     }
 
     .dashboardContent {
@@ -731,33 +832,16 @@ body,
     }
 }
 
-
 @media (max-width: 640px) {
-    .authWrapper {
-        padding: 20px 12px;
-    }
-
-    .authCard,
-    .authRegisterCard {
-        max-width: 100%;
-        min-height: auto;
-        padding: 28px 22px 24px;
-    }
-
-    .authTitle {
-        font-size: 1.9rem;
-    }
-
-    .dashboardTopBar {
-        flex-direction: column !important;
-        align-items: stretch !important;
+    .dashboardShell {
+        padding: 18px 14px;
     }
 
     .dashboardBrandBox {
         min-width: auto;
     }
 
-    .dashboardSearchBox {
-        max-width: 100%;
+    .dashboardLogoutButton .sapMBtnInner {
+        width: 100% !important;
     }
 }
