@@ -29,7 +29,7 @@ public class DocumentMemberService {
         User loggedUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Logged user not found"));
 
-        //Author of the document
+        //Owner of the document
         User author = userRepository.findByUsername(request.getAuthor())
                 .orElseThrow(() -> new IllegalArgumentException("Logged user not found"));
 

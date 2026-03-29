@@ -60,7 +60,6 @@ public class DocumentService {
                 .build();
 
         DocumentVersion savedVersion = documentVersionRepository.save(firstVersion);
-//   eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJwcmVzbGF2YTEyMyIsImlhdCI6MTc3NDYzNjI1OCwiZXhwIjoxNzc0NzIyNjU4fQ.vDvKn_QV3ArtHsyQa13XI9XEz7Nmtv24hI_SjsL6SguStSRj-wIYv_Wl17Fml-DBb4yB-SRHC5aQInzbYDLSyA
         savedDocument.setActiveVersion(savedVersion);
         documentRepository.save(savedDocument);
 
