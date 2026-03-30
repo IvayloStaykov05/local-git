@@ -2,6 +2,7 @@ package com.example.project.backend.service;
 
 import com.example.project.backend.dto.request.document.CreateFirstDocumentRequest;
 import com.example.project.backend.dto.response.document.CreateFirstDocumentResponse;
+import com.example.project.backend.dto.response.document.DocumentListResponse;
 import com.example.project.backend.model.entity.Document;
 import com.example.project.backend.model.entity.DocumentMember;
 import com.example.project.backend.model.entity.DocumentVersion;
@@ -15,6 +16,8 @@ import com.example.project.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -72,5 +75,30 @@ public class DocumentService {
                 "Document created successfully"
         );
 
+    }
+
+    @Transactional(readOnly = true)
+    public List<DocumentListResponse> getLoggedUserDocuments(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<DocumentMember> memberships =
+                documentMemberRepository.findAllByUserWithDocumentCreatorAndActiveVersion(user);
+
+        return memberships.stream()
+                .map(member -> new DocumentListResponse(
+                        member.getDocument().getId(),
+                        member.getDocument().getTitle(),
+                        member.getDocument().getDescription(),
+                        member.getRole().name(),
+                        member.getDocument().getCreatedBy().getUsername(),
+                        member.getDocument().getActiveVersion() != null
+                                ? member.getDocument().getActiveVersion().getVersionNumber()
+                                : null,
+                        member.getDocument().getActiveVersion() != null
+                                ? member.getDocument().getActiveVersion().getContent()
+                                : null
+                ))
+                .toList();
     }
 }
