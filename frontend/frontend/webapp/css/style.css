@@ -878,3 +878,229 @@ newDocumentFooter.newDocumentFooter {
         width: 100% !important;
     }
 }
+
+.documentPageShell {
+    height: 100%;
+    padding: 28px 28px 32px;
+    box-sizing: border-box;
+    gap: 20px;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)),
+        url("../img/login-bg.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.documentTopBar {
+    min-height: 72px;
+    padding: 0 22px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10);
+}
+
+.documentTopBarLeft {
+    gap: 12px;
+}
+
+.documentBackButton .sapMBtnInner {
+    border: none !important;
+    background: transparent !important;
+    color: #222 !important;
+    box-shadow: none !important;
+}
+
+.documentBackButton .sapMBtnContent {
+    font-weight: 600;
+}
+
+.documentPageTitle {
+    font-size: 1.6rem !important;
+    font-weight: 700 !important;
+    color: #111 !important;
+}
+
+.documentFormCard,
+.documentMetaCard,
+.documentPreviewCard,
+.documentTeamCard,
+.documentVersionsCard {
+    background: rgba(255, 255, 255, 0.58);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 24px;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.10);
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.documentFormCard {
+    max-width: 920px;
+    width: 100%;
+    margin: 0 auto;
+    gap: 18px;
+}
+
+.documentFormFields {
+    gap: 12px;
+}
+
+.documentFormLabel {
+    color: #3c3c3c;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.documentFormInput .sapMInputBaseContentWrapper,
+.documentFormTextArea .sapMTextAreaInner,
+.documentFileUploader {
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, 0.62) !important;
+    border: 1px solid rgba(255, 255, 255, 0.45) !important;
+    box-shadow: none !important;
+}
+
+.documentFormInput .sapMInputBaseInner,
+.documentFormTextArea .sapMTextAreaInner {
+    background: transparent !important;
+    color: #333 !important;
+    padding: 0.9rem 1rem !important;
+}
+
+.documentFileUploader .sapMInputBaseInner {
+    background: transparent !important;
+}
+
+.documentSelectedFileText {
+    color: #666;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+.documentFormActions {
+    margin-top: 8px;
+}
+
+.documentDetailsContent {
+    flex: 1;
+    gap: 20px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.documentDetailsMainColumn {
+    width: 66%;
+    gap: 20px;
+}
+
+.documentDetailsSideColumn {
+    width: 34%;
+    gap: 20px;
+}
+
+.documentMetaCard {
+    min-height: 180px;
+    gap: 8px;
+}
+
+.documentPreviewCard {
+    flex: 1;
+    min-height: 520px;
+    overflow: hidden;
+}
+
+.documentTeamCard,
+.documentVersionsCard {
+    min-height: 250px;
+    max-height: 360px;
+    overflow: auto;
+}
+
+.documentMemberRoleText,
+.documentVersionStatusText {
+    font-weight: 700;
+    color: #7b3ff2;
+    background: rgba(123, 63, 242, 0.10);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+}
+
+.documentVersionItem {
+    gap: 10px;
+}
+
+.documentVersionActions {
+    gap: 8px;
+}
+
+.documentPreviewPlaceholder {
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 1rem;
+    text-align: center;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.45);
+}
+
+@media (max-width: 1100px) {
+    .documentDetailsContent {
+        flex-direction: column;
+        overflow: auto;
+    }
+
+    .documentDetailsMainColumn,
+    .documentDetailsSideColumn {
+        width: 100%;
+    }
+
+    .documentPreviewCard {
+        min-height: 420px;
+    }
+}
+
+.memberDialogContent {
+    gap: 14px;
+    padding-top: 8px;
+}
+
+.memberDialogLabel {
+    font-weight: 700;
+    color: #2f2f2f;
+    margin-top: 10px;
+    margin-bottom: 6px;
+}
+
+.memberDialogSearch {
+    margin-bottom: 6px;
+}
+
+.memberRoleButtonsWrapper {
+    margin-bottom: 10px;
+}
+
+.memberRoleSegmentedButton {
+    width: 100%;
+}
+
+.memberRoleSegmentedButton .sapMSegBBtn {
+    min-height: 2.75rem;
+}
+
+.memberRoleSegmentedButton .sapMSegBBtn .sapMBtnInner {
+    border-radius: 12px !important;
+    font-weight: 700;
+}
+
+.memberRoleSegmentedButton .sapMSegBBtnSel .sapMBtnInner {
+    background: linear-gradient(135deg, #6e45ff, #7f56d9) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+}

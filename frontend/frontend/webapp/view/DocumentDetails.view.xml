@@ -1,0 +1,74 @@
+<mvc:View
+    controllerName="com.example.project.frontend.frontend.controller.DocumentDetails"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <Page showHeader="false" class="dashboardPage">
+        <content>
+            <VBox class="documentPageShell" width="100%">
+                <HBox class="documentTopBar" justifyContent="SpaceBetween" alignItems="Center">
+                    <HBox alignItems="Center" class="documentTopBarLeft">
+                        <Button text="← Back" type="Transparent" press=".onBackToDashboard" class="documentBackButton" />
+                        <Title text="{document>/title}" class="documentPageTitle" />
+                    </HBox>
+                    <Button text="Add team member" press=".onOpenAddMemberDialog" class="dashboardLogoutButton" />
+                </HBox>
+
+                <HBox class="documentDetailsContent" alignItems="Start" justifyContent="SpaceBetween">
+                    <VBox class="documentDetailsMainColumn">
+                        <VBox class="glassCard documentMetaCard">
+                            <Title text="Document details" class="sectionMainTitle" />
+                            <Text text="Owner: {document>/createdBy}" class="profileInfoText" />
+                            <Text text="Your role: {document>/currentUserRole}" class="profileInfoText" />
+                            <Text text="Description: {document>/description}" class="profileInfoText" />
+                            <Text text="Active version: {document>/activeVersionNumber}" class="profileInfoText" />
+                            <Text text="Active file: {document>/activeFileName}" class="profileInfoText" />
+                        </VBox>
+
+                        <VBox class="glassCard documentPreviewCard">
+                            <Title text="Document content" class="sectionMainTitle" />
+                            <core:HTML content="{document>/activePreviewHtml}" preferDOM="false" />
+                        </VBox>
+                    </VBox>
+
+                    <VBox class="documentDetailsSideColumn">
+                        <VBox class="glassCard documentTeamCard">
+                            <Title text="Team" class="sectionMainTitle" />
+                            <List items="{document>/teamMembers}" showSeparators="None" class="dashboardList">
+                                <CustomListItem>
+                                    <HBox class="listGlassItem personItem" justifyContent="SpaceBetween" alignItems="Center">
+                                        <VBox>
+                                            <Title text="{document>username}" class="listItemTitle" />
+                                            <Text text="{document>email}" class="listItemSubtitle" />
+                                        </VBox>
+                                        <Text text="{document>role}" class="documentMemberRoleText" />
+                                    </HBox>
+                                </CustomListItem>
+                            </List>
+                        </VBox>
+
+                        <VBox class="glassCard documentVersionsCard">
+                            <Title text="All versions" class="sectionMainTitle" />
+                            <List items="{document>/versions}" showSeparators="None" class="dashboardList">
+                                <CustomListItem>
+                                    <VBox class="listGlassItem documentVersionItem">
+                                        <HBox justifyContent="SpaceBetween" alignItems="Center">
+                                            <Title text="Version {document>versionNumber}" class="listItemTitle" />
+                                            <Text text="{document>status}" class="documentVersionStatusText" />
+                                        </HBox>
+                                        <Text text="Created by: {document>createdBy}" class="listItemSubtitle" />
+                                        <HBox justifyContent="End" class="documentVersionActions">
+                                            <Button text="Open" type="Transparent" press=".onOpenVersion" />
+                                            <Button text="Download" type="Transparent" press=".onDownloadVersion" />
+                                        </HBox>
+                                    </VBox>
+                                </CustomListItem>
+                            </List>
+                        </VBox>
+                    </VBox>
+                </HBox>
+            </VBox>
+        </content>
+    </Page>
+</mvc:View>

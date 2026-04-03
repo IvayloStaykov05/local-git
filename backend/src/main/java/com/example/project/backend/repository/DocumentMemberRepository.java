@@ -53,4 +53,18 @@ public interface DocumentMemberRepository extends JpaRepository<DocumentMember, 
             @Param("username") String username,
             @Param("search") String search
     );
+
+    @Query("""
+    SELECT dm
+    FROM DocumentMember dm
+    JOIN FETCH dm.user u
+    WHERE dm.document.id = :documentId
+    ORDER BY CASE dm.role
+        WHEN com.example.project.backend.model.enums.DocumentRole.OWNER THEN 0
+        WHEN com.example.project.backend.model.enums.DocumentRole.AUTHOR THEN 1
+        WHEN com.example.project.backend.model.enums.DocumentRole.REVIEWER THEN 2
+        ELSE 3
+    END, u.username
+    """)
+    List<DocumentMember> findAllByDocumentIdWithUser(@Param("documentId") Long documentId);
 }

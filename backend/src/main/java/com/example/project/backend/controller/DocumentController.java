@@ -1,6 +1,7 @@
 package com.example.project.backend.controller;
 
 import com.example.project.backend.dto.response.document.CreateFirstDocumentResponse;
+import com.example.project.backend.dto.response.document.DocumentDetailsResponse;
 import com.example.project.backend.dto.response.document.DocumentListResponse;
 import com.example.project.backend.service.DocumentService;
 import lombok.RequiredArgsConstructor;
@@ -42,5 +43,13 @@ public class DocumentController {
                 documentService.getLoggedUserDocuments(authentication.getName(), search);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{documentId}")
+    public ResponseEntity<DocumentDetailsResponse> getDocumentDetails(
+            @PathVariable Long documentId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(documentService.getDocumentDetails(documentId, authentication.getName()));
     }
 }

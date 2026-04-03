@@ -161,6 +161,22 @@ sap.ui.define([
             var sValue = oEvent.getParameter("value");
             this.getView().getModel("dashboard").setProperty("/search", sValue);
             this._loadDashboardData(sValue);
-        }
+        },
+
+        onCreateDocument: function () {
+            this.getOwnerComponent().getRouter().navTo("RouteCreateDocument");
+        },
+
+        onOpenDocument: function (oEvent) {
+            var oContext = oEvent.getSource().getBindingContext("dashboard");
+            if (!oContext) {
+            return;
+            }
+
+            var oDocument = oContext.getObject();
+            this.getOwnerComponent().getRouter().navTo("RouteDocumentDetails", {
+            documentId: String(oDocument.id)
+            });
+        },
     });
 });

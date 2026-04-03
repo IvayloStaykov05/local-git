@@ -1,12 +1,15 @@
 package com.example.project.backend.service;
 
 import com.example.project.backend.dto.response.document.CreateFirstDocumentResponse;
+import com.example.project.backend.dto.response.document.DocumentDetailsResponse;
 import com.example.project.backend.dto.response.document.DocumentListResponse;
+import com.example.project.backend.dto.response.document.DocumentTeamMemberResponse;
 import com.example.project.backend.model.entity.Document;
 import com.example.project.backend.model.entity.DocumentMember;
 import com.example.project.backend.model.entity.DocumentVersion;
 import com.example.project.backend.model.entity.User;
 import com.example.project.backend.model.enums.DocumentRole;
+import com.example.project.backend.model.enums.SystemRole;
 import com.example.project.backend.model.enums.VersionStatus;
 import com.example.project.backend.repository.DocumentMemberRepository;
 import com.example.project.backend.repository.DocumentRepository;
@@ -116,5 +119,49 @@ public class DocumentService {
                                 : null
                 ))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public DocumentDetailsResponse getDocumentDetails(Long documentId, String username) {
+        User loggedUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Logged user not found"));
+
+        Document document = documentRepository.findDetailsById(documentId)
+                .orElseThrow(() -> new IllegalArgumentException("Document not found"));
+
+        DocumentMember currentMembership = documentMemberRepository.findByDocumentAndUser(document, loggedUser)
+                .orElse(null);
+
+        if (loggedUser.getSystemRole() != SystemRole.ADMIN && currentMembership == null) {
+            throw new IllegalArgumentException("You don't have access to this document");
+        }
+
+        List<DocumentTeamMemberResponse> teamMembers = documentMemberRepository.findAllByDocumentIdWithUser(documentId)
+                .stream()
+                .map(member -> new DocumentTeamMemberResponse(
+                        member.getUser().getId(),
+                        member.getUser().getUsername(),
+                        member.getUser().getFirstName(),
+                        member.getUser().getLastName(),
+                        member.getUser().getEmail(),
+                        member.getRole().name()
+                ))
+                .toList();
+
+        DocumentVersion activeVersion = document.getActiveVersion();
+
+        return new DocumentDetailsResponse(
+                document.getId(),
+                document.getTitle(),
+                document.getDescription(),
+                document.getCreatedBy().getUsername(),
+                currentMembership != null ? currentMembership.getRole().name() : loggedUser.getSystemRole().name(),
+                activeVersion != null ? activeVersion.getVersionNumber() : null,
+                activeVersion != null ? activeVersion.getId() : null,
+                activeVersion != null ? activeVersion.getOriginalFileName() : null,
+                activeVersion != null ? activeVersion.getContentType() : null,
+                activeVersion != null ? activeVersion.getFileSize() : null,
+                teamMembers
+        );
     }
 }
