@@ -1,0 +1,47 @@
+<mvc:View
+    controllerName="com.example.project.frontend.frontend.controller.CreateDocument"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:unified="sap.ui.unified">
+
+    <Page showHeader="false" class="dashboardPage">
+        <content>
+            <VBox class="documentPageShell" width="100%">
+                <HBox class="documentTopBar" justifyContent="SpaceBetween" alignItems="Center">
+                    <HBox alignItems="Center" class="documentTopBarLeft">
+                        <Button text="← Back" type="Transparent" press=".onBackToDashboard" class="documentBackButton" />
+                        <Title text="Create new document" class="documentPageTitle" />
+                    </HBox>
+                </HBox>
+
+                <VBox class="glassCard documentFormCard">
+                    <Title text="Document information" class="sectionMainTitle" />
+
+                    <VBox class="documentFormFields">
+                        <Label text="Document name" class="documentFormLabel" />
+                        <Input value="{createDocument>/title}" class="documentFormInput" placeholder="Enter document name" />
+
+                        <Label text="Description" class="documentFormLabel" />
+                        <TextArea value="{createDocument>/description}" rows="6" class="documentFormTextArea" placeholder="Enter description" />
+
+                        <Label text="Upload file" class="documentFormLabel" />
+                        <unified:FileUploader
+                            id="createDocumentFileUploader"
+                            width="100%"
+                            change=".onFileChange"
+                            sameFilenameAllowed="true"
+                            buttonOnly="false"
+                            placeholder="Choose a file"
+                            class="documentFileUploader" />
+
+                        <Text text="{= ${createDocument>/fileName} ? 'Selected file: ' + ${createDocument>/fileName} : 'No file selected yet' }" class="documentSelectedFileText" />
+                    </VBox>
+
+                    <HBox justifyContent="End" class="documentFormActions">
+                        <Button text="Create document" press=".onCreateDocument" class="dashboardLogoutButton" />
+                    </HBox>
+                </VBox>
+            </VBox>
+        </content>
+    </Page>
+</mvc:View>

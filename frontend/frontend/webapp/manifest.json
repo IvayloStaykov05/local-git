@@ -31,7 +31,8 @@
       "libs": {
         "sap.m": {},
         "sap.ui.core": {},
-        "sap.ui.layout": {}
+        "sap.ui.layout": {},
+        "sap.ui.unified": {}
       }
     },
     "contentDensities": {
@@ -77,6 +78,16 @@
           "name": "RouteDashboard",
           "pattern": "dashboard",
           "target": "TargetDashboard"
+        },
+        {
+          "name": "RouteCreateDocument",
+          "pattern": "documents/create",
+          "target": "TargetCreateDocument"
+        },
+        {
+          "name": "RouteDocumentDetails",
+          "pattern": "documents/{documentId}",
+          "target": "TargetDocumentDetails"
         }
       ],
       "targets": {
@@ -91,6 +102,14 @@
         "TargetDashboard": {
           "viewName": "Dashboard",
           "viewId": "Dashboard"
+        },
+        "TargetCreateDocument": {
+          "viewName": "CreateDocument",
+          "viewId": "CreateDocument"
+        },
+        "TargetDocumentDetails": {
+          "viewName": "DocumentDetails",
+          "viewId": "DocumentDetails"
         }
       }
     }
