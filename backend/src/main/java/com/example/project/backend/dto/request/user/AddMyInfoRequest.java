@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class UserAddMyInfoRequest {
+public class AddMyInfoRequest {
 
     @NotBlank(message = "You must specify your personal information")
     @Lob

@@ -2,7 +2,8 @@ package com.example.project.backend.service;
 
 import com.example.project.backend.dto.request.user.ForgotPasswordRequest;
 import com.example.project.backend.dto.request.user.UserRegisterRequest;
-import com.example.project.backend.dto.response.user.UserAddMyInfoResponse;
+import com.example.project.backend.dto.response.user.AddMyInfoResponse;
+import com.example.project.backend.dto.response.user.UpdateMyInfoResponse;
 import com.example.project.backend.dto.response.user.UserRegisterResponse;
 import com.example.project.backend.model.entity.User;
 import com.example.project.backend.repository.UserRepository;
@@ -84,13 +85,13 @@ public class UserService {
     }
 
     @Transactional
-    public UserAddMyInfoResponse addMyInfo(String info, String username){
+    public AddMyInfoResponse addMyInfo(String info, String username){
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Logged user not found"));
 
         user.setMyInfo(info);
 
-        return new UserAddMyInfoResponse(
+        return new AddMyInfoResponse(
                 user.getId(),
                 user.getUsername(),
                 "Personal information added successfully"
@@ -107,5 +108,24 @@ public class UserService {
         }
 
         return info;
+    }
+
+    @Transactional
+    public UpdateMyInfoResponse updateMyInfo(String info, String username){
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Logged user not found"));
+
+        String currentInfo = user.getMyInfo();
+        if(currentInfo == null){
+            throw new IllegalArgumentException("You must add personal information before you update it");
+        }
+
+        user.setMyInfo(info);
+
+        return new UpdateMyInfoResponse(
+                user.getId(),
+                user.getUsername(),
+                "Personal information updated successfully"
+        );
     }
 }

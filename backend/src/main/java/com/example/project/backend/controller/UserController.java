@@ -1,7 +1,9 @@
 package com.example.project.backend.controller;
 
-import com.example.project.backend.dto.request.user.UserAddMyInfoRequest;
-import com.example.project.backend.dto.response.user.UserAddMyInfoResponse;
+import com.example.project.backend.dto.request.user.AddMyInfoRequest;
+import com.example.project.backend.dto.request.user.UpdateMyInfoRequest;
+import com.example.project.backend.dto.response.user.AddMyInfoResponse;
+import com.example.project.backend.dto.response.user.UpdateMyInfoResponse;
 import com.example.project.backend.dto.response.user.UserSearchResponse;
 import com.example.project.backend.service.UserService;
 import jakarta.validation.Valid;
@@ -34,9 +36,18 @@ public class UserController {
     }
 
     @PostMapping("/addMyInfo")
-    public ResponseEntity<UserAddMyInfoResponse> addMyInfo(
-            @RequestBody @Valid UserAddMyInfoRequest request, Authentication authentication){
-        UserAddMyInfoResponse response = userService.addMyInfo(request.getInfo(), authentication.getName());
+    public ResponseEntity<AddMyInfoResponse> addMyInfo(
+            @RequestBody @Valid AddMyInfoRequest request, Authentication authentication
+    ){
+        AddMyInfoResponse response = userService.addMyInfo(request.getInfo(), authentication.getName());
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/updateMyInfo")
+    public ResponseEntity<UpdateMyInfoResponse> updateMyInfo(
+            @RequestBody @Valid UpdateMyInfoRequest request, Authentication authentication
+            ){
+        UpdateMyInfoResponse response = userService.updateMyInfo(request.getInfo(), authentication.getName());
         return ResponseEntity.ok(response);
     }
 }
