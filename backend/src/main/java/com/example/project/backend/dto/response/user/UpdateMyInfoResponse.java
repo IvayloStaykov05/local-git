@@ -5,8 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class UserAddMyInfoResponse {
-
+public class UpdateMyInfoResponse {
     private Long id;
     private String username;
     private String message;
