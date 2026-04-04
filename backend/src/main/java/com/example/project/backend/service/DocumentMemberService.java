@@ -28,54 +28,6 @@ public class DocumentMemberService {
     private final UserRepository userRepository;
 
     @Transactional
-    public CreateDocumentMemberResponse createDocumentMember(CreateDocumentMemberRequest request, String username){
-
-        //Logged user
-        User loggedUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Logged user not found"));
-
-        //Owner of the document
-        User owner = userRepository.findByUsername(request.getOwner())
-                .orElseThrow(() -> new IllegalArgumentException("Logged user not found"));
-
-        //The user who will be granted a role
-        User userMember = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        Document document = documentRepository.findById(request.getDocumentId())
-                .orElseThrow(() -> new IllegalArgumentException("Document not found"));
-
-        //Role of the logged user in the document
-        DocumentMember loggedMember = null;
-        if(loggedUser.getSystemRole() != SystemRole.ADMIN){
-            loggedMember = documentMemberRepository.findByDocumentAndUser(document, loggedUser)
-                    .orElseThrow(() -> new IllegalArgumentException("You don't have access to this document"));
-        }
-
-
-        if(loggedUser.getSystemRole() != SystemRole.ADMIN && loggedMember.getRole() != DocumentRole.OWNER){
-            throw new IllegalArgumentException("You don't have the rights to change roles for this document");
-        }
-
-        DocumentMember newMember = DocumentMember.builder()
-                .document(document)
-                .user(userMember)
-                .role(DocumentRole.valueOf(request.getRole().toUpperCase()))
-                .addedBy(loggedUser)
-                .build();
-
-        DocumentMember savedMember = documentMemberRepository.save(newMember);
-
-        return new CreateDocumentMemberResponse(
-                savedMember.getId(),
-                savedMember.getRole(),
-                savedMember.getUser().getUsername(),
-                document.getTitle(),
-                "Document role added successfully"
-        );
-    }
-
-    @Transactional
     public DeleteDocumentMemberResponse deleteDocumentMember(DeleteDocumentMemberRequest request, String username){
 
         User loggedUser = userRepository.findByUsername(username)
@@ -132,5 +84,27 @@ public class DocumentMemberService {
                         user.getEmail()
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public DocumentMember addUserToDocument(
+            Document document,
+            User user,
+            DocumentRole role,
+            User addedBy
+    ) {
+
+        if (documentMemberRepository.findByDocumentAndUser(document, user).isPresent()) {
+            throw new IllegalArgumentException("User is already a member of this document");
+        }
+
+        DocumentMember newMember = DocumentMember.builder()
+                .document(document)
+                .user(user)
+                .role(role)
+                .addedBy(addedBy)
+                .build();
+
+        return documentMemberRepository.save(newMember);
     }
 }

@@ -10,6 +10,7 @@ import com.example.project.backend.dto.response.documentVersion.DocumentVersionH
 import com.example.project.backend.dto.response.documentVersion.RejectDocumentVersionResponse;
 import com.example.project.backend.model.entity.*;
 import com.example.project.backend.model.enums.DocumentRole;
+import com.example.project.backend.model.enums.NotificationType;
 import com.example.project.backend.model.enums.VersionStatus;
 import com.example.project.backend.repository.*;
 import lombok.RequiredArgsConstructor;
