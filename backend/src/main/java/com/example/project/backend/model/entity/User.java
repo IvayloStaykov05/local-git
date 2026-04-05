@@ -33,6 +33,9 @@ public class User extends BaseEntity{
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    private boolean enabled = false;
+
     @Lob
     @Column(name = "my_info", columnDefinition = "LONGTEXT")
     private String myInfo;
