@@ -6,33 +6,55 @@ import com.example.project.backend.dto.response.user.AddMyInfoResponse;
 import com.example.project.backend.dto.response.user.UpdateMyInfoResponse;
 import com.example.project.backend.dto.response.user.UserRegisterResponse;
 import com.example.project.backend.model.entity.User;
+import com.example.project.backend.model.entity.VerificationToken;
 import com.example.project.backend.repository.UserRepository;
+import com.example.project.backend.repository.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.project.backend.dto.response.user.UserSearchResponse;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final EmailService emailService;
+    private final VerificationTokenRepository verificationTokenRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserRegisterResponse register(UserRegisterRequest request) {
         validateRegistration(request);
 
         User user = buildUser(request);
+
+        user.setEnabled(false);
+
         User savedUser = userRepository.save(user);
+
+        String token = UUID.randomUUID().toString();
+
+        VerificationToken verificationToken = VerificationToken.builder()
+                .token(token)
+                .user(savedUser)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .build();
+
+        verificationTokenRepository.save(verificationToken);
+
+        emailService.sendVerificationEmail(savedUser.getEmail(), token);
 
         return new UserRegisterResponse(
                 savedUser.getId(),
                 savedUser.getUsername(),
                 savedUser.getEmail(),
-                "User registered successfully"
+                "User registered successfully. Please check your email to activate your account."
         );
     }
 

@@ -7,7 +7,9 @@ import com.example.project.backend.dto.request.user.UserRegisterRequest;
 import com.example.project.backend.dto.response.user.UserLoginResponse;
 import com.example.project.backend.dto.response.user.UserRegisterResponse;
 import com.example.project.backend.model.entity.User;
+import com.example.project.backend.model.entity.VerificationToken;
 import com.example.project.backend.repository.UserRepository;
+import com.example.project.backend.repository.VerificationTokenRepository;
 import com.example.project.backend.service.CustomUserDetailsService;
 import com.example.project.backend.service.UserService;
 import jakarta.validation.Valid;
@@ -19,6 +21,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -27,6 +31,7 @@ public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
+    private final VerificationTokenRepository verificationTokenRepository;
     private final JwtService jwtService;
     private final CustomUserDetailsService customUserDetailsService;
 
@@ -36,6 +41,27 @@ public class AuthController {
     ) {
         UserRegisterResponse response = userService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<String> verify(@RequestParam String token) {
+
+        VerificationToken verificationToken = verificationTokenRepository
+                .findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid token"));
+
+
+        if (verificationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token expired");
+        }
+
+        User user = verificationToken.getUser();
+        user.setEnabled(true);
+        userRepository.save(user);
+
+        verificationTokenRepository.delete(verificationToken);
+
+        return ResponseEntity.ok("Account activated successfully!");
     }
 
     @PostMapping("/login")
