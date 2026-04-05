@@ -76,7 +76,7 @@ public class SecurityConfiguration {
                         "http://localhost:8081"
                 ));
                 corsConfiguration.setAllowedMethods(Arrays.asList(
-                        "GET", "POST", "PUT", "DELETE", "OPTIONS"
+                        "GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"
                 ));
                 corsConfiguration.setAllowCredentials(true);
                 corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
