@@ -22,13 +22,24 @@ public class DocumentMemberController {
 
     private final DocumentMemberService documentMemberService;
 
+    @PostMapping("/createNewMember")
+    public ResponseEntity<CreateDocumentMemberResponse> createDocumentMember(
+            @RequestBody @Valid CreateDocumentMemberRequest request,
+            Authentication authentication
+    ) {
+        CreateDocumentMemberResponse response =
+                documentMemberService.createDocumentMember(request, authentication.getName());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
     @DeleteMapping("/deleteMember")
     public ResponseEntity<DeleteDocumentMemberResponse> deleteDocumentMember(
             @RequestBody @Valid DeleteDocumentMemberRequest request,
             Authentication authentication
-            ) {
-        DeleteDocumentMemberResponse response = documentMemberService.deleteDocumentMember(request, authentication.getName());
+    ) {
+        DeleteDocumentMemberResponse response =
+                documentMemberService.deleteDocumentMember(request, authentication.getName());
 
         return ResponseEntity.ok(response);
     }

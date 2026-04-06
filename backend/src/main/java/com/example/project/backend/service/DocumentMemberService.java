@@ -28,6 +28,47 @@ public class DocumentMemberService {
     private final UserRepository userRepository;
 
     @Transactional
+    public CreateDocumentMemberResponse createDocumentMember(CreateDocumentMemberRequest request, String loggedUsername) {
+
+        User loggedUser = userRepository.findByUsername(loggedUsername)
+                .orElseThrow(() -> new IllegalArgumentException("No logged user found"));
+
+        Document document = documentRepository.findById(request.getDocumentId())
+                .orElseThrow(() -> new IllegalArgumentException("No document found"));
+
+        User targetUser = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        DocumentMember loggedMember = documentMemberRepository.findByDocumentAndUser(document, loggedUser)
+                .orElseThrow(() -> new IllegalArgumentException("You don't have access to this document"));
+
+        if (loggedMember.getRole() != DocumentRole.OWNER) {
+            throw new IllegalArgumentException("Only the owner can add members to this document");
+        }
+
+        if (loggedUser.getUsername().equalsIgnoreCase(targetUser.getUsername())) {
+            throw new IllegalArgumentException("You cannot add yourself again");
+        }
+
+        DocumentRole role;
+        try {
+            role = DocumentRole.valueOf(request.getRole().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid document role");
+        }
+
+        DocumentMember newMember = addUserToDocument(document, targetUser, role, loggedUser);
+
+        return new CreateDocumentMemberResponse(
+                newMember.getId(),
+                newMember.getRole(),
+                newMember.getUser().getUsername(),
+                newMember.getDocument().getTitle(),
+                "User added successfully"
+        );
+    }
+
+    @Transactional
     public DeleteDocumentMemberResponse deleteDocumentMember(DeleteDocumentMemberRequest request, String username){
 
         User loggedUser = userRepository.findByUsername(username)
@@ -36,7 +77,6 @@ public class DocumentMemberService {
         Document document = documentRepository.findById(request.getDocumentId())
                 .orElseThrow(() -> new IllegalArgumentException("No document found"));
 
-        //Role of the logged user in the document
         DocumentMember loggedMember = null;
         if(loggedUser.getSystemRole() != SystemRole.ADMIN){
             loggedMember = documentMemberRepository.findByDocumentAndUser(document, loggedUser)
@@ -47,7 +87,6 @@ public class DocumentMemberService {
             throw new IllegalArgumentException("You don't have the rights to change roles for this document");
         }
 
-        //The one we will remove from the document
         User member = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -68,7 +107,6 @@ public class DocumentMemberService {
         documentMemberRepository.delete(documentMember);
 
         return response;
-
     }
 
     @Transactional(readOnly = true)

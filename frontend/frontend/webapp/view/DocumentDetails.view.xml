@@ -12,7 +12,11 @@
                         <Button text="← Back" type="Transparent" press=".onBackToDashboard" class="documentBackButton" />
                         <Title text="{document>/title}" class="documentPageTitle" />
                     </HBox>
-                    <Button text="Add team member" press=".onOpenAddMemberDialog" class="dashboardLogoutButton" />
+                    <Button
+                        text="Add team member"
+                        press=".onOpenAddMemberDialog"
+                        class="dashboardLogoutButton"
+                        visible="{= ${document>/currentUserRole} === 'OWNER' }" />
                 </HBox>
 
                 <HBox class="documentDetailsContent" alignItems="Start" justifyContent="SpaceBetween">

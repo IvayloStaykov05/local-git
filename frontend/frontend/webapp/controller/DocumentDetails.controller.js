@@ -135,7 +135,7 @@ sap.ui.define([
             }
         },
 
-        onOpenVersion: function (oEvent) {
+        onOpenVersion: async function (oEvent) {
             var oContext = oEvent.getSource().getBindingContext("document");
             if (!oContext) {
                 return;
@@ -144,14 +144,61 @@ sap.ui.define([
             var oVersion = oContext.getObject();
             var oDocument = this.getView().getModel("document").getData();
             var sToken = localStorage.getItem("token");
+            var iVersionId = oVersion.versionId;
 
-            var sUrl = "http://localhost:8080/api/documentVersions/" +
-                oDocument.id + "/" + oVersion.id + "/download?token=" + encodeURIComponent(sToken);
+            try {
+                var oResponse = await fetch(
+                    "http://localhost:8080/api/documentVersions/" + oDocument.id + "/" + iVersionId + "/download",
+                    {
+                        method: "GET",
+                        headers: {
+                            "Authorization": "Bearer " + sToken
+                        }
+                    }
+                );
 
-            window.open(sUrl, "_blank");
+                if (!oResponse.ok) {
+                    var sErrorText = await oResponse.text();
+                    throw new Error(sErrorText || "Failed to open file");
+                }
+
+                var sContentType = oResponse.headers.get("Content-Type") || "";
+                var sContentDisposition = oResponse.headers.get("Content-Disposition") || "";
+                var sFileName = this._extractFileNameFromDisposition(sContentDisposition) || ("version-" + oVersion.versionNumber);
+
+                if (sContentType.includes("text/plain") || /\.txt$/i.test(sFileName)) {
+                    var sText = await oResponse.text();
+
+                    this.getView().getModel("document").setProperty(
+                        "/activePreviewHtml",
+                        this._buildTextPreviewHtml(sText)
+                    );
+                    this.getView().getModel("document").setProperty("/activeFileName", sFileName);
+                    this.getView().getModel("document").setProperty("/activeContentType", sContentType);
+
+                    return;
+                }
+
+                var oBlob = await oResponse.blob();
+                var sBlobUrl = URL.createObjectURL(oBlob);
+
+                if (sContentType.includes("application/pdf") || /\.pdf$/i.test(sFileName)) {
+                    window.open(sBlobUrl, "_blank");
+
+                    setTimeout(function () {
+                        URL.revokeObjectURL(sBlobUrl);
+                    }, 10000);
+
+                    return;
+                }
+
+                MessageToast.show("Този тип файл не може да се визуализира тук. Използвай Download.");
+            } catch (oError) {
+                MessageBox.error("Неуспешно отваряне: " + oError.message);
+            }
         },
 
-        onDownloadVersion: function (oEvent) {
+        onDownloadVersion: async function (oEvent) {
             var oContext = oEvent.getSource().getBindingContext("document");
             if (!oContext) {
                 return;
@@ -160,14 +207,86 @@ sap.ui.define([
             var oVersion = oContext.getObject();
             var oDocument = this.getView().getModel("document").getData();
             var sToken = localStorage.getItem("token");
+            var iVersionId = oVersion.versionId;
 
-            var sUrl = "http://localhost:8080/api/documentVersions/" +
-                oDocument.id + "/" + oVersion.id + "/download?token=" + encodeURIComponent(sToken);
+            try {
+                var oResponse = await fetch(
+                    "http://localhost:8080/api/documentVersions/" + oDocument.id + "/" + iVersionId + "/download",
+                    {
+                        method: "GET",
+                        headers: {
+                            "Authorization": "Bearer " + sToken
+                        }
+                    }
+                );
 
-            window.open(sUrl, "_blank");
+                if (!oResponse.ok) {
+                    var sErrorText = await oResponse.text();
+                    throw new Error(sErrorText || "Failed to download file");
+                }
+
+                var sContentDisposition = oResponse.headers.get("Content-Disposition") || "";
+                var sFileName = this._extractFileNameFromDisposition(sContentDisposition) || ("version-" + oVersion.versionNumber);
+
+                var oBlob = await oResponse.blob();
+                var sBlobUrl = URL.createObjectURL(oBlob);
+
+                var oLink = document.createElement("a");
+                oLink.href = sBlobUrl;
+                oLink.download = sFileName;
+                document.body.appendChild(oLink);
+                oLink.click();
+                document.body.removeChild(oLink);
+
+                URL.revokeObjectURL(sBlobUrl);
+            } catch (oError) {
+                MessageBox.error("Неуспешно теглене: " + oError.message);
+            }
+        },
+
+        _extractFileNameFromDisposition: function (sDisposition) {
+            if (!sDisposition) {
+                return "";
+            }
+
+            var aUtfMatch = /filename\*=UTF-8''([^;]+)/i.exec(sDisposition);
+            if (aUtfMatch && aUtfMatch[1]) {
+                return decodeURIComponent(aUtfMatch[1]);
+            }
+
+            var aSimpleMatch = /filename=\"?([^\";]+)\"?/i.exec(sDisposition);
+            if (aSimpleMatch && aSimpleMatch[1]) {
+                return aSimpleMatch[1];
+            }
+
+            return "";
+        },
+
+        _escapeHtml: function (sValue) {
+            if (sValue === null || sValue === undefined) {
+                return "";
+            }
+
+            return String(sValue)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        },
+
+        _buildTextPreviewHtml: function (sText) {
+            return "<div class='documentPreviewText'><pre>" + this._escapeHtml(sText) + "</pre></div>";
         },
 
         onOpenAddMemberDialog: async function () {
+            var sCurrentUserRole = this.getView().getModel("document").getProperty("/currentUserRole");
+
+            if (sCurrentUserRole !== "OWNER") {
+                MessageBox.warning("Само owner може да добавя хора.");
+                return;
+            }
+
             if (!this._oAddMemberDialog) {
                 this._createAddMemberDialog();
             }
@@ -334,6 +453,11 @@ sap.ui.define([
                 return;
             }
 
+            if (oDocument.currentUserRole !== "OWNER") {
+                MessageBox.warning("Само owner може да добавя хора.");
+                return;
+            }
+
             try {
                 var oResponse = await fetch("http://localhost:8080/api/documentMembers/createNewMember", {
                     method: "POST",
@@ -342,7 +466,7 @@ sap.ui.define([
                         "Authorization": "Bearer " + sToken
                     },
                     body: JSON.stringify({
-                        title: oDocument.title,
+                        documentId: oDocument.id,
                         owner: oDocument.createdBy,
                         username: sUsername,
                         role: sRole
