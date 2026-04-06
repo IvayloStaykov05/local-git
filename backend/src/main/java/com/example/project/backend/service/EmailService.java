@@ -16,6 +16,7 @@ public class EmailService {
         String link = "http://localhost:8080/api/auth/verify?token=" + token;
 
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("pprodanova.06@gmail.com"); // 🔥 важно
         message.setTo(to);
         message.setSubject("Activate your account");
         message.setText("Click the link to activate your account:\n" + link);
