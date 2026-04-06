@@ -9,6 +9,11 @@ import com.example.project.backend.dto.response.documentVersion.DocumentFileResp
 import com.example.project.backend.dto.response.documentVersion.DocumentVersionHistoryResponse;
 import com.example.project.backend.dto.response.documentVersion.RejectDocumentVersionResponse;
 import com.example.project.backend.model.entity.*;
+import com.example.project.backend.dto.response.documentVersion.*;
+import com.example.project.backend.model.entity.Document;
+import com.example.project.backend.model.entity.DocumentMember;
+import com.example.project.backend.model.entity.DocumentVersion;
+import com.example.project.backend.model.entity.User;
 import com.example.project.backend.model.enums.DocumentRole;
 import com.example.project.backend.model.enums.NotificationType;
 import com.example.project.backend.model.enums.VersionStatus;
@@ -210,6 +215,67 @@ public class DocumentVersionService {
     }
 
     @Transactional(readOnly = true)
+    public DocumentVersionDetailsResponse getActiveVersion(Long documentId, String username) {
+        Document document = getDocumentAccessibleByLoggedUser(documentId, username);
+
+        DocumentVersion activeVersion = document.getActiveVersion();
+
+        if (activeVersion == null) {
+            throw new IllegalArgumentException("Document has no active version");
+        }
+
+        return mapToVersionDetailsResponse(activeVersion);
+    }
+
+    @Transactional(readOnly = true)
+    public DocumentVersionDetailsResponse getParentVersion(Long documentId, String username) {
+        Document document = getDocumentAccessibleByLoggedUser(documentId, username);
+
+        DocumentVersion activeVersion = document.getActiveVersion();
+
+        if (activeVersion == null) {
+            throw new IllegalArgumentException("Document has no active version");
+        }
+
+        DocumentVersion parentVersion = activeVersion.getParentVersion();
+
+        if (parentVersion == null) {
+            throw new IllegalArgumentException("Active version has no parent version");
+        }
+
+        return mapToVersionDetailsResponse(parentVersion);
+    }
+
+    private Document getDocumentAccessibleByLoggedUser(Long documentId, String username) {
+        User loggedUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Logged user not found"));
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new IllegalArgumentException("Document not found"));
+
+        documentMemberRepository.findByDocumentAndUser(document, loggedUser)
+                .orElseThrow(() -> new IllegalArgumentException("You don't have access to the document"));
+
+        return document;
+    }
+
+    private DocumentVersionDetailsResponse mapToVersionDetailsResponse(DocumentVersion version) {
+        return new DocumentVersionDetailsResponse(
+                version.getId(),
+                version.getDocument().getId(),
+                version.getDocument().getTitle(),
+                version.getVersionNumber(),
+                version.getStatus().name(),
+                version.getCreatedBy() != null ? version.getCreatedBy().getUsername() : null,
+                version.getOriginalFileName(),
+                version.getContentType(),
+                version.getFileSize(),
+                version.getCreatedAt()
+        );
+    }
+
+
+    @Transactional(readOnly = true)
     public DocumentFileResponse downloadVersionFile(Long versionId, Long documentId) {
         DocumentVersion version = documentVersionRepository
                 .findByIdAndDocumentId(versionId, documentId)
@@ -217,4 +283,7 @@ public class DocumentVersionService {
 
         return documentFileStorageService.readFile(version);
     }
+
+
+
 }

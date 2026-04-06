@@ -4,11 +4,8 @@ import com.example.project.backend.dto.request.documentVersion.ApproveDocumentVe
 import com.example.project.backend.dto.request.documentVersion.CreateDocumentVersionRequest;
 import com.example.project.backend.dto.request.documentVersion.DocumentVersionHistoryRequest;
 import com.example.project.backend.dto.request.documentVersion.RejectDocumentVersionRequest;
-import com.example.project.backend.dto.response.documentVersion.ApproveDocumentVersionResponse;
-import com.example.project.backend.dto.response.documentVersion.CreateDocumentVersionResponse;
-import com.example.project.backend.dto.response.documentVersion.DocumentFileResponse;
-import com.example.project.backend.dto.response.documentVersion.DocumentVersionHistoryResponse;
-import com.example.project.backend.dto.response.documentVersion.RejectDocumentVersionResponse;
+import com.example.project.backend.dto.response.documentVersion.*;
+import com.example.project.backend.model.entity.DocumentVersion;
 import com.example.project.backend.service.DocumentVersionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -76,6 +73,29 @@ public class DocumentVersionController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/{documentId}/active")
+    public ResponseEntity<DocumentVersionDetailsResponse> getActiveVersion(
+            @PathVariable Long documentId,
+            Authentication authentication
+    ) {
+        DocumentVersionDetailsResponse response =
+                documentVersionService.getActiveVersion(documentId, authentication.getName());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{documentId}/parent")
+    public ResponseEntity<DocumentVersionDetailsResponse> getParentVersion(
+            @PathVariable Long documentId,
+            Authentication authentication
+    ) {
+        DocumentVersionDetailsResponse response =
+                documentVersionService.getParentVersion(documentId, authentication.getName());
+
+        return ResponseEntity.ok(response);
+    }
+
 
     @GetMapping("/{documentId}/{versionId}/download")
     public ResponseEntity<ByteArrayResource> downloadVersionFile(
