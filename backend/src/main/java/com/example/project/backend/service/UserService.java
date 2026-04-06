@@ -4,7 +4,9 @@ import com.example.project.backend.dto.request.user.ForgotPasswordRequest;
 import com.example.project.backend.dto.request.user.UserRegisterRequest;
 import com.example.project.backend.dto.response.user.AddMyInfoResponse;
 import com.example.project.backend.dto.response.user.UpdateMyInfoResponse;
+import com.example.project.backend.dto.response.user.UserProfileResponse;
 import com.example.project.backend.dto.response.user.UserRegisterResponse;
+import com.example.project.backend.dto.response.user.UserSearchResponse;
 import com.example.project.backend.model.entity.User;
 import com.example.project.backend.model.entity.VerificationToken;
 import com.example.project.backend.repository.UserRepository;
@@ -12,7 +14,6 @@ import com.example.project.backend.repository.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.example.project.backend.dto.response.user.UserSearchResponse;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -106,6 +107,25 @@ public class UserService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public UserProfileResponse getUserProfile(Long userId, String loggedUsername) {
+        userRepository.findByUsername(loggedUsername)
+                .orElseThrow(() -> new IllegalArgumentException("Logged user not found"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return new UserProfileResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getSystemRole(),
+                user.getMyInfo()
+        );
+    }
+
     @Transactional
     public AddMyInfoResponse addMyInfo(String info, String username){
         User user = userRepository.findByUsername(username)
@@ -121,7 +141,7 @@ public class UserService {
     }
 
     public String getMyInfo(String username){
-        User user = userRepository.findByUsername((username))
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Logged user not found"));
 
         String info = user.getMyInfo();

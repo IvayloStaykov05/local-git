@@ -17,23 +17,98 @@
                     <HBox class="dashboardSearchWrapper" alignItems="Center" justifyContent="Center">
                         <HBox class="dashboardSearchBox" alignItems="Center">
                             <core:Icon src="sap-icon://search" class="dashboardSearchIcon" />
-                                <Input
-                                    value="{dashboard>/search}"
-                                    placeholder="{i18n>dashboardSearchPlaceholder}"
-                                    class="dashboardSearchInput"
-                                    submit=".onSearchDashboard"
-                                    liveChange=".onSearchLiveChange" />
+                            <Input
+                                value="{dashboard>/search}"
+                                placeholder="{i18n>dashboardSearchPlaceholder}"
+                                class="dashboardSearchInput"
+                                submit="onSearchDashboard"
+                                liveChange="onSearchLiveChange" />
                         </HBox>
                     </HBox>
 
                     <HBox class="dashboardLogoutWrapper" alignItems="Center" justifyContent="End">
                         <Button
                             text="{i18n>logout}"
-                            press=".onLogout"
+                            press="onLogout"
                             class="dashboardLogoutButton" />
                     </HBox>
-
                 </HBox>
+
+                <VBox
+                    class="glassCard searchResultsCard"
+                    visible="{dashboard>/showSearchResults}">
+                    <HBox justifyContent="SpaceBetween" alignItems="Center">
+                        <Title text="Search Results" class="sectionMainTitle" />
+                        <Text text="•••" class="dotsText" />
+                    </HBox>
+
+                    <HBox class="searchResultsWrapper" justifyContent="SpaceBetween" alignItems="Start">
+                        <VBox class="searchResultsColumn">
+                            <Title text="Users" class="sectionSubTitle" />
+                            <List
+                                items="{dashboard>/searchUsers}"
+                                class="dashboardList"
+                                showSeparators="None">
+                                <CustomListItem>
+                                    <HBox
+                                        class="listGlassItem personItem"
+                                        justifyContent="SpaceBetween"
+                                        alignItems="Center">
+                                        <HBox alignItems="Center">
+                                            <Avatar
+                                                displaySize="L"
+                                                initials="{dashboard>initials}"
+                                                class="personAvatar" />
+                                            <VBox class="personTextBox">
+                                                <Title text="{dashboard>name}" class="listItemTitle" />
+                                                <Text text="{dashboard>email}" class="listItemSubtitle" />
+                                            </VBox>
+                                        </HBox>
+
+                                        <Button
+                                            text="›"
+                                            type="Transparent"
+                                            press="onOpenSearchUser"
+                                            class="itemArrowButton" />
+                                    </HBox>
+                                </CustomListItem>
+                            </List>
+
+                            <Text
+                                text="No users found"
+                                visible="{= ${dashboard>/searchUsers}.length === 0 }" />
+                        </VBox>
+
+                        <VBox class="searchResultsColumn">
+                            <Title text="My Documents" class="sectionSubTitle" />
+                            <List
+                                items="{dashboard>/searchDocuments}"
+                                class="dashboardList"
+                                showSeparators="None">
+                                <CustomListItem>
+                                    <HBox
+                                        class="listGlassItem documentItem"
+                                        justifyContent="SpaceBetween"
+                                        alignItems="Center">
+                                        <VBox>
+                                            <Title text="{dashboard>title}" class="listItemTitle" />
+                                            <Text text="{dashboard>description}" class="listItemSubtitle" />
+                                        </VBox>
+                                        <Button
+                                            text="›"
+                                            type="Transparent"
+                                            press="onOpenDocument"
+                                            class="itemArrowButton" />
+                                    </HBox>
+                                </CustomListItem>
+                            </List>
+
+                            <Text
+                                text="No documents found"
+                                visible="{= ${dashboard>/searchDocuments}.length === 0 }" />
+                        </VBox>
+                    </HBox>
+                </VBox>
 
                 <HBox class="dashboardContent" justifyContent="SpaceBetween" alignItems="Stretch">
 
@@ -44,7 +119,11 @@
                             <VBox class="innerGlassCard profileInnerCard">
                                 <HBox justifyContent="SpaceBetween" alignItems="Center">
                                     <Title text="{i18n>myInfo}" class="sectionSubTitle" />
-                                    <Text text="•••" class="dotsText" />
+                                    <Button
+                                        icon="sap-icon://overflow"
+                                        type="Transparent"
+                                        press="onOpenMyInfoMenu"
+                                        class="myInfoMenuButton" />
                                 </HBox>
 
                                 <ScrollContainer
@@ -55,6 +134,17 @@
                                     class="innerScrollContainer">
                                     <VBox class="profileInfoBox">
                                         <Text text="Email: {dashboard>/myInfo/email}" class="profileInfoText" />
+                                        <Text text="Role: {dashboard>/myInfo/systemRole}" class="profileInfoText" />
+                                        <Text
+                                            text="{dashboard>/myInfo/myInfo}"
+                                            class="profileInfoText"
+                                            wrapping="true"
+                                            visible="{= !!${dashboard>/myInfo/myInfo} }" />
+                                        <Text
+                                            text="You have not added personal information yet."
+                                            class="profileInfoText"
+                                            wrapping="true"
+                                            visible="{= !${dashboard>/myInfo/myInfo} }" />
                                     </VBox>
                                 </ScrollContainer>
                             </VBox>
@@ -91,7 +181,7 @@
                                                 <Button
                                                     text="›"
                                                     type="Transparent"
-                                                    press=".onOpenDocument"
+                                                    press="onOpenDocument"
                                                     class="itemArrowButton" />
                                             </HBox>
                                         </CustomListItem>
@@ -101,7 +191,7 @@
                                 <VBox class="newDocumentFooter">
                                     <Button
                                         text="{i18n>newDocument}"
-                                        press=".onCreateDocument"
+                                        press="onCreateDocument"
                                         width="100%"
                                         class="newDocumentButton" />
                                 </VBox>
@@ -110,7 +200,6 @@
                     </VBox>
 
                     <VBox class="dashboardColumn dashboardColumnRight">
-
                         <VBox class="glassCard peopleCard">
                             <HBox justifyContent="SpaceBetween" alignItems="Center">
                                 <Title text="{i18n>peopleWithWork}" class="sectionMainTitle" />
@@ -146,7 +235,7 @@
                                             <Button
                                                 text="›"
                                                 type="Transparent"
-                                                press=".onOpenPersonWork"
+                                                press="onOpenPersonWork"
                                                 class="itemArrowButton" />
                                         </HBox>
                                     </CustomListItem>
@@ -194,11 +283,8 @@
                                 </VBox>
                             </ScrollContainer>
                         </VBox>
-
                     </VBox>
-
                 </HBox>
-
             </VBox>
         </content>
     </Page>

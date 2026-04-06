@@ -1,0 +1,33 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <Dialog
+        id="myInfoDialog"
+        title="{dashboard>/myInfoDialog/title}"
+        contentWidth="500px"
+        draggable="true"
+        resizable="true">
+
+        <content>
+            <VBox class="memberDialogContent">
+                <Label text="Personal information" class="memberDialogLabel" />
+                <TextArea
+                    value="{dashboard>/myInfoDialog/value}"
+                    rows="10"
+                    width="100%"
+                    growing="true"
+                    growingMaxLines="15"
+                    placeholder="Write something about yourself..." />
+            </VBox>
+        </content>
+
+        <beginButton>
+            <Button text="Save" press="onSaveMyInfo" />
+        </beginButton>
+
+        <endButton>
+            <Button text="Cancel" press="onCloseMyInfoDialog" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

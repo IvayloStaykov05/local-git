@@ -1104,3 +1104,43 @@ newDocumentFooter.newDocumentFooter {
     color: #fff !important;
     border-color: transparent !important;
 }
+
+.searchResultsCard {
+    margin: 0 0 18px 0;
+    padding: 18px;
+}
+
+.searchResultsWrapper {
+    gap: 18px;
+    margin-top: 12px;
+}
+
+.searchResultsColumn {
+    width: 48%;
+}
+
+.profileInfoBox {
+    gap: 10px;
+}
+
+.myInfoMenuButton {
+    min-width: 2.5rem !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.myInfoMenuButton .sapMBtnInner {
+    min-width: 2.5rem !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 50% !important;
+}
+
+.myInfoMenuButton .sapMBtnIcon {
+    font-size: 1rem !important;
+}

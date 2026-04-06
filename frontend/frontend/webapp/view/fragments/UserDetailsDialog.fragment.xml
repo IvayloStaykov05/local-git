@@ -1,0 +1,46 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <Dialog
+        id="userDetailsDialog"
+        title="User Details"
+        contentWidth="520px"
+        contentHeight="420px"
+        draggable="true"
+        resizable="true">
+
+        <content>
+            <VBox class="memberDialogContent">
+                <Title text="{dashboard>/selectedUser/fullName}" level="H3" />
+                <Text text="Username: {dashboard>/selectedUser/username}" />
+                <Text text="Email: {dashboard>/selectedUser/email}" />
+                <Text text="Role: {dashboard>/selectedUser/systemRole}" />
+
+                <Label text="Personal information" class="memberDialogLabel" />
+
+                <ScrollContainer
+                    height="220px"
+                    width="100%"
+                    vertical="true"
+                    horizontal="false">
+                    <VBox>
+                        <Text
+                            text="{dashboard>/selectedUser/myInfo}"
+                            wrapping="true"
+                            visible="{= !!${dashboard>/selectedUser/myInfo} }" />
+
+                        <Text
+                            text="This user has not added personal information yet."
+                            wrapping="true"
+                            visible="{= !${dashboard>/selectedUser/myInfo} }" />
+                    </VBox>
+                </ScrollContainer>
+            </VBox>
+        </content>
+
+        <beginButton>
+            <Button text="Close" press=".onCloseUserDetailsDialog" />
+        </beginButton>
+    </Dialog>
+</core:FragmentDefinition>
