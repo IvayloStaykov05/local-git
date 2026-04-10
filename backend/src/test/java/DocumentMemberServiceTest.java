@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,7 +41,7 @@ class DocumentMemberServiceTest {
     @Test
     void shouldCreateDocumentMemberSuccessfullyWhenLoggedUserIsOwner() {
         CreateDocumentMemberRequest request = new CreateDocumentMemberRequest();
-        request.setTitle("Project Plan");
+        request.setDocumentId(1L);
         request.setOwner("ownerUser");
         request.setUsername("authorUser");
         request.setRole("AUTHOR");
@@ -50,19 +51,15 @@ class DocumentMemberServiceTest {
                 .systemRole(SystemRole.USER)
                 .build();
 
-        User owner = User.builder()
-                .username("ownerUser")
-                .systemRole(SystemRole.USER)
-                .build();
-
-        User userMember = User.builder()
+        User targetUser = User.builder()
                 .username("authorUser")
                 .build();
 
         Document document = Document.builder()
                 .title("Project Plan")
-                .createdBy(owner)
+                .createdBy(loggedUser)
                 .build();
+        document.setId(1L);
 
         DocumentMember loggedMember = DocumentMember.builder()
                 .document(document)
@@ -72,20 +69,22 @@ class DocumentMemberServiceTest {
 
         DocumentMember savedMember = DocumentMember.builder()
                 .document(document)
-                .user(userMember)
+                .user(targetUser)
                 .role(DocumentRole.AUTHOR)
                 .addedBy(loggedUser)
                 .build();
         savedMember.setId(55L);
 
         when(userRepository.findByUsername("ownerUser"))
-                .thenReturn(Optional.of(loggedUser), Optional.of(owner));
+                .thenReturn(Optional.of(loggedUser));
         when(userRepository.findByUsername("authorUser"))
-                .thenReturn(Optional.of(userMember));
-        when(documentRepository.findByTitleAndCreatedBy("Project Plan", owner))
+                .thenReturn(Optional.of(targetUser));
+        when(documentRepository.findById(1L))
                 .thenReturn(Optional.of(document));
         when(documentMemberRepository.findByDocumentAndUser(document, loggedUser))
                 .thenReturn(Optional.of(loggedMember));
+        when(documentMemberRepository.findByDocumentAndUser(document, targetUser))
+                .thenReturn(Optional.empty());
         when(documentMemberRepository.save(any(DocumentMember.class)))
                 .thenReturn(savedMember);
 
@@ -97,75 +96,15 @@ class DocumentMemberServiceTest {
         assertEquals(DocumentRole.AUTHOR, response.getRole());
         assertEquals("authorUser", response.getUsername());
         assertEquals("Project Plan", response.getTitle());
-        assertEquals("Document role added successfully", response.getMessage());
+        assertEquals("User added successfully", response.getMessage());
 
         verify(documentMemberRepository).save(any(DocumentMember.class));
     }
 
     @Test
-    void shouldCreateDocumentMemberSuccessfullyWhenLoggedUserIsAdmin() {
+    void shouldThrowWhenLoggedUserHasNoAccessToDocument() {
         CreateDocumentMemberRequest request = new CreateDocumentMemberRequest();
-        request.setTitle("Project Plan");
-        request.setOwner("ownerUser");
-        request.setUsername("reviewerUser");
-        request.setRole("REVIEWER");
-
-        User admin = User.builder()
-                .username("adminUser")
-                .systemRole(SystemRole.ADMIN)
-                .build();
-
-        User owner = User.builder()
-                .username("ownerUser")
-                .systemRole(SystemRole.USER)
-                .build();
-
-        User userMember = User.builder()
-                .username("reviewerUser")
-                .build();
-
-        Document document = Document.builder()
-                .title("Project Plan")
-                .createdBy(owner)
-                .build();
-
-        DocumentMember savedMember = DocumentMember.builder()
-                .document(document)
-                .user(userMember)
-                .role(DocumentRole.REVIEWER)
-                .addedBy(admin)
-                .build();
-        savedMember.setId(77L);
-
-        when(userRepository.findByUsername("adminUser"))
-                .thenReturn(Optional.of(admin));
-        when(userRepository.findByUsername("ownerUser"))
-                .thenReturn(Optional.of(owner));
-        when(userRepository.findByUsername("reviewerUser"))
-                .thenReturn(Optional.of(userMember));
-        when(documentRepository.findByTitleAndCreatedBy("Project Plan", owner))
-                .thenReturn(Optional.of(document));
-        when(documentMemberRepository.save(any(DocumentMember.class)))
-                .thenReturn(savedMember);
-
-        CreateDocumentMemberResponse response =
-                documentMemberService.createDocumentMember(request, "adminUser");
-
-        assertNotNull(response);
-        assertEquals(77L, response.getId());
-        assertEquals(DocumentRole.REVIEWER, response.getRole());
-        assertEquals("reviewerUser", response.getUsername());
-        assertEquals("Project Plan", response.getTitle());
-        assertEquals("Document role added successfully", response.getMessage());
-
-        verify(documentMemberRepository, never()).findByDocumentAndUser(document, admin);
-        verify(documentMemberRepository).save(any(DocumentMember.class));
-    }
-
-    @Test
-    void shouldThrowWhenLoggedUserIsNotOwnerOrAdmin() {
-        CreateDocumentMemberRequest request = new CreateDocumentMemberRequest();
-        request.setTitle("Project Plan");
+        request.setDocumentId(1L);
         request.setOwner("ownerUser");
         request.setUsername("readerUser");
         request.setRole("READER");
@@ -175,19 +114,66 @@ class DocumentMemberServiceTest {
                 .systemRole(SystemRole.USER)
                 .build();
 
+        User targetUser = User.builder()
+                .username("readerUser")
+                .build();
+
         User owner = User.builder()
                 .username("ownerUser")
                 .systemRole(SystemRole.USER)
-                .build();
-
-        User userMember = User.builder()
-                .username("readerUser")
                 .build();
 
         Document document = Document.builder()
                 .title("Project Plan")
                 .createdBy(owner)
                 .build();
+        document.setId(1L);
+
+        when(userRepository.findByUsername("authorUser"))
+                .thenReturn(Optional.of(loggedUser));
+        when(userRepository.findByUsername("readerUser"))
+                .thenReturn(Optional.of(targetUser));
+        when(documentRepository.findById(1L))
+                .thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser))
+                .thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentMemberService.createDocumentMember(request, "authorUser")
+        );
+
+        assertEquals("You don't have access to this document", exception.getMessage());
+        verify(documentMemberRepository, never()).save(any(DocumentMember.class));
+    }
+
+    @Test
+    void shouldThrowWhenLoggedUserIsNotOwner() {
+        CreateDocumentMemberRequest request = new CreateDocumentMemberRequest();
+        request.setDocumentId(1L);
+        request.setOwner("ownerUser");
+        request.setUsername("readerUser");
+        request.setRole("READER");
+
+        User loggedUser = User.builder()
+                .username("authorUser")
+                .systemRole(SystemRole.USER)
+                .build();
+
+        User targetUser = User.builder()
+                .username("readerUser")
+                .build();
+
+        User owner = User.builder()
+                .username("ownerUser")
+                .systemRole(SystemRole.USER)
+                .build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .createdBy(owner)
+                .build();
+        document.setId(1L);
 
         DocumentMember loggedMember = DocumentMember.builder()
                 .document(document)
@@ -197,11 +183,9 @@ class DocumentMemberServiceTest {
 
         when(userRepository.findByUsername("authorUser"))
                 .thenReturn(Optional.of(loggedUser));
-        when(userRepository.findByUsername("ownerUser"))
-                .thenReturn(Optional.of(owner));
         when(userRepository.findByUsername("readerUser"))
-                .thenReturn(Optional.of(userMember));
-        when(documentRepository.findByTitleAndCreatedBy("Project Plan", owner))
+                .thenReturn(Optional.of(targetUser));
+        when(documentRepository.findById(1L))
                 .thenReturn(Optional.of(document));
         when(documentMemberRepository.findByDocumentAndUser(document, loggedUser))
                 .thenReturn(Optional.of(loggedMember));
@@ -211,7 +195,95 @@ class DocumentMemberServiceTest {
                 () -> documentMemberService.createDocumentMember(request, "authorUser")
         );
 
-        assertEquals("You don't have the rights to change roles for this document", exception.getMessage());
+        assertEquals("Only the owner can add members to this document", exception.getMessage());
+        verify(documentMemberRepository, never()).save(any(DocumentMember.class));
+    }
+
+    @Test
+    void shouldThrowWhenTryingToAddYourselfAgain() {
+        CreateDocumentMemberRequest request = new CreateDocumentMemberRequest();
+        request.setDocumentId(1L);
+        request.setOwner("ownerUser");
+        request.setUsername("ownerUser");
+        request.setRole("AUTHOR");
+
+        User loggedUser = User.builder()
+                .username("ownerUser")
+                .systemRole(SystemRole.USER)
+                .build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .createdBy(loggedUser)
+                .build();
+        document.setId(1L);
+
+        DocumentMember loggedMember = DocumentMember.builder()
+                .document(document)
+                .user(loggedUser)
+                .role(DocumentRole.OWNER)
+                .build();
+
+        when(userRepository.findByUsername("ownerUser"))
+                .thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(1L))
+                .thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser))
+                .thenReturn(Optional.of(loggedMember));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentMemberService.createDocumentMember(request, "ownerUser")
+        );
+
+        assertEquals("You cannot add yourself again", exception.getMessage());
+        verify(documentMemberRepository, never()).save(any(DocumentMember.class));
+    }
+
+    @Test
+    void shouldThrowWhenRoleIsInvalid() {
+        CreateDocumentMemberRequest request = new CreateDocumentMemberRequest();
+        request.setDocumentId(1L);
+        request.setOwner("ownerUser");
+        request.setUsername("readerUser");
+        request.setRole("INVALID_ROLE");
+
+        User loggedUser = User.builder()
+                .username("ownerUser")
+                .systemRole(SystemRole.USER)
+                .build();
+
+        User targetUser = User.builder()
+                .username("readerUser")
+                .build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .createdBy(loggedUser)
+                .build();
+        document.setId(1L);
+
+        DocumentMember loggedMember = DocumentMember.builder()
+                .document(document)
+                .user(loggedUser)
+                .role(DocumentRole.OWNER)
+                .build();
+
+        when(userRepository.findByUsername("ownerUser"))
+                .thenReturn(Optional.of(loggedUser));
+        when(userRepository.findByUsername("readerUser"))
+                .thenReturn(Optional.of(targetUser));
+        when(documentRepository.findById(1L))
+                .thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser))
+                .thenReturn(Optional.of(loggedMember));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentMemberService.createDocumentMember(request, "ownerUser")
+        );
+
+        assertEquals("Invalid document role", exception.getMessage());
         verify(documentMemberRepository, never()).save(any(DocumentMember.class));
     }
 

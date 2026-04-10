@@ -3,14 +3,18 @@ import com.example.project.backend.dto.request.documentVersion.CreateDocumentVer
 import com.example.project.backend.dto.request.documentVersion.RejectDocumentVersionRequest;
 import com.example.project.backend.dto.response.documentVersion.ApproveDocumentVersionResponse;
 import com.example.project.backend.dto.response.documentVersion.CreateDocumentVersionResponse;
+import com.example.project.backend.dto.response.documentVersion.DocumentFileResponse;
+import com.example.project.backend.dto.response.documentVersion.DocumentVersionDetailsResponse;
 import com.example.project.backend.dto.response.documentVersion.DocumentVersionHistoryResponse;
 import com.example.project.backend.dto.response.documentVersion.RejectDocumentVersionResponse;
+import com.example.project.backend.model.entity.Comment;
 import com.example.project.backend.model.entity.Document;
 import com.example.project.backend.model.entity.DocumentMember;
 import com.example.project.backend.model.entity.DocumentVersion;
 import com.example.project.backend.model.entity.User;
 import com.example.project.backend.model.enums.DocumentRole;
 import com.example.project.backend.model.enums.VersionStatus;
+import com.example.project.backend.repository.CommentRepository;
 import com.example.project.backend.repository.DocumentMemberRepository;
 import com.example.project.backend.repository.DocumentRepository;
 import com.example.project.backend.repository.DocumentVersionRepository;
@@ -19,14 +23,13 @@ import com.example.project.backend.service.DocumentFileStorageService;
 import com.example.project.backend.service.DocumentVersionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
-import com.example.project.backend.dto.response.documentVersion.DocumentFileResponse;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -50,6 +53,9 @@ class DocumentVersionServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private CommentRepository commentRepository;
+
+    @Mock
     private DocumentFileStorageService documentFileStorageService;
 
     @InjectMocks
@@ -58,8 +64,7 @@ class DocumentVersionServiceTest {
     @Test
     void shouldCreateDocumentVersionSuccessfully() {
         CreateDocumentVersionRequest request = new CreateDocumentVersionRequest();
-        request.setTitle("Project Plan");
-        request.setOwner("ownerUser");
+        request.setDocumentId(1L);
 
         MultipartFile file = new MockMultipartFile(
                 "file",
@@ -69,7 +74,6 @@ class DocumentVersionServiceTest {
         );
 
         User loggedUser = User.builder().username("authorUser").build();
-        User owner = User.builder().username("ownerUser").build();
 
         DocumentVersion activeVersion = DocumentVersion.builder()
                 .versionNumber(1)
@@ -78,13 +82,14 @@ class DocumentVersionServiceTest {
                 .contentType("application/pdf")
                 .fileSize(100L)
                 .status(VersionStatus.APPROVED)
-                .createdBy(owner)
+                .createdBy(loggedUser)
                 .build();
 
         Document document = Document.builder()
                 .title("Project Plan")
-                .createdBy(owner)
                 .activeVersion(activeVersion)
+                .numberOfVersions(1)
+                .createdBy(loggedUser)
                 .build();
         document.setId(1L);
 
@@ -116,8 +121,7 @@ class DocumentVersionServiceTest {
         savedVersion.setId(200L);
 
         when(userRepository.findByUsername("authorUser")).thenReturn(Optional.of(loggedUser));
-        when(userRepository.findByUsername("ownerUser")).thenReturn(Optional.of(owner));
-        when(documentRepository.findByTitleAndCreatedBy("Project Plan", owner)).thenReturn(Optional.of(document));
+        when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
         when(documentMemberRepository.findByDocumentAndUser(document, loggedUser)).thenReturn(Optional.of(membership));
         when(documentFileStorageService.saveFile(1L, 2, file)).thenReturn(storedFile);
         when(documentVersionRepository.save(any(DocumentVersion.class))).thenReturn(savedVersion);
@@ -131,6 +135,7 @@ class DocumentVersionServiceTest {
         assertEquals("authorUser", response.getCreatedByUsername());
         assertEquals(2, response.getVersion());
         assertEquals("Document version created successfully", response.getMessage());
+        assertEquals(2, document.getNumberOfVersions());
 
         verify(documentFileStorageService).saveFile(1L, 2, file);
         verify(documentVersionRepository).save(any(DocumentVersion.class));
@@ -139,8 +144,7 @@ class DocumentVersionServiceTest {
     @Test
     void shouldThrowWhenUserHasNoRightsToCreateDocumentVersion() {
         CreateDocumentVersionRequest request = new CreateDocumentVersionRequest();
-        request.setTitle("Project Plan");
-        request.setOwner("ownerUser");
+        request.setDocumentId(1L);
 
         MultipartFile file = new MockMultipartFile(
                 "file",
@@ -150,7 +154,6 @@ class DocumentVersionServiceTest {
         );
 
         User loggedUser = User.builder().username("readerUser").build();
-        User owner = User.builder().username("ownerUser").build();
 
         DocumentVersion activeVersion = DocumentVersion.builder()
                 .versionNumber(1)
@@ -159,14 +162,16 @@ class DocumentVersionServiceTest {
                 .contentType("application/pdf")
                 .fileSize(100L)
                 .status(VersionStatus.APPROVED)
-                .createdBy(owner)
+                .createdBy(loggedUser)
                 .build();
 
         Document document = Document.builder()
                 .title("Project Plan")
-                .createdBy(owner)
                 .activeVersion(activeVersion)
+                .numberOfVersions(1)
+                .createdBy(loggedUser)
                 .build();
+        document.setId(1L);
 
         DocumentMember membership = DocumentMember.builder()
                 .document(document)
@@ -175,8 +180,7 @@ class DocumentVersionServiceTest {
                 .build();
 
         when(userRepository.findByUsername("readerUser")).thenReturn(Optional.of(loggedUser));
-        when(userRepository.findByUsername("ownerUser")).thenReturn(Optional.of(owner));
-        when(documentRepository.findByTitleAndCreatedBy("Project Plan", owner)).thenReturn(Optional.of(document));
+        when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
         when(documentMemberRepository.findByDocumentAndUser(document, loggedUser)).thenReturn(Optional.of(membership));
 
         IllegalArgumentException exception = assertThrows(
@@ -242,6 +246,7 @@ class DocumentVersionServiceTest {
 
         verify(documentVersionRepository).save(version);
         verify(documentRepository).save(document);
+        verify(commentRepository).save(any(Comment.class));
     }
 
     @Test
@@ -295,6 +300,7 @@ class DocumentVersionServiceTest {
         assertNotNull(version.getRejectedAt());
 
         verify(documentVersionRepository).save(version);
+        verify(commentRepository).save(any(Comment.class));
     }
 
     @Test
@@ -352,8 +358,7 @@ class DocumentVersionServiceTest {
     @Test
     void shouldThrowWhenFileIsMissingWhileCreatingDocumentVersion() {
         CreateDocumentVersionRequest request = new CreateDocumentVersionRequest();
-        request.setTitle("Project Plan");
-        request.setOwner("ownerUser");
+        request.setDocumentId(1L);
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
@@ -363,7 +368,7 @@ class DocumentVersionServiceTest {
         assertEquals("File is required", exception.getMessage());
 
         verify(userRepository, never()).findByUsername(anyString());
-        verify(documentRepository, never()).findByTitleAndCreatedBy(anyString(), any());
+        verify(documentRepository, never()).findById(anyLong());
         verify(documentMemberRepository, never()).findByDocumentAndUser(any(), any());
         verify(documentVersionRepository, never()).save(any(DocumentVersion.class));
         verify(documentFileStorageService, never()).saveFile(anyLong(), anyInt(), any());
@@ -407,6 +412,7 @@ class DocumentVersionServiceTest {
         verify(documentMemberRepository, never()).findByDocumentAndUser(any(), any());
         verify(documentVersionRepository, never()).save(any(DocumentVersion.class));
         verify(documentRepository, never()).save(any(Document.class));
+        verify(commentRepository, never()).save(any(Comment.class));
     }
 
     @Test
@@ -446,6 +452,7 @@ class DocumentVersionServiceTest {
 
         verify(documentMemberRepository, never()).findByDocumentAndUser(any(), any());
         verify(documentVersionRepository, never()).save(any(DocumentVersion.class));
+        verify(commentRepository, never()).save(any(Comment.class));
     }
 
     @Test
@@ -501,5 +508,111 @@ class DocumentVersionServiceTest {
         verify(documentFileStorageService, never()).readFile(any(DocumentVersion.class));
     }
 
+    @Test
+    void shouldReturnActiveVersionSuccessfully() {
+        User loggedUser = User.builder().username("authorUser").build();
 
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(10L);
+
+        DocumentVersion activeVersion = DocumentVersion.builder()
+                .document(document)
+                .versionNumber(3)
+                .filePath("/uploads/documents/10/v3-plan.pdf")
+                .originalFileName("v3-plan.pdf")
+                .contentType("application/pdf")
+                .fileSize(333L)
+                .status(VersionStatus.APPROVED)
+                .createdBy(loggedUser)
+                .createdAt(LocalDateTime.now())
+                .build();
+        activeVersion.setId(30L);
+
+        document.setActiveVersion(activeVersion);
+
+        when(userRepository.findByUsername("authorUser")).thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(10L)).thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser))
+                .thenReturn(Optional.of(DocumentMember.builder()
+                        .document(document)
+                        .user(loggedUser)
+                        .role(DocumentRole.AUTHOR)
+                        .build()));
+
+        DocumentVersionDetailsResponse response = documentVersionService.getActiveVersion(10L, "authorUser");
+
+        assertNotNull(response);
+        assertEquals(30L, response.getVersionId());
+        assertEquals(10L, response.getDocumentId());
+        assertEquals("Project Plan", response.getDocumentTitle());
+        assertEquals(3, response.getVersionNumber());
+        assertEquals("APPROVED", response.getStatus());
+        assertEquals("authorUser", response.getCreatedBy());
+        assertEquals("v3-plan.pdf", response.getOriginalFileName());
+        assertEquals("application/pdf", response.getContentType());
+        assertEquals(333L, response.getFileSize());
+    }
+
+    @Test
+    void shouldReturnParentVersionSuccessfully() {
+        User loggedUser = User.builder().username("authorUser").build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(10L);
+
+        DocumentVersion parentVersion = DocumentVersion.builder()
+                .document(document)
+                .versionNumber(2)
+                .filePath("/uploads/documents/10/v2-plan.pdf")
+                .originalFileName("v2-plan.pdf")
+                .contentType("application/pdf")
+                .fileSize(222L)
+                .status(VersionStatus.APPROVED)
+                .createdBy(loggedUser)
+                .createdAt(LocalDateTime.now().minusDays(1))
+                .build();
+        parentVersion.setId(20L);
+
+        DocumentVersion activeVersion = DocumentVersion.builder()
+                .document(document)
+                .versionNumber(3)
+                .filePath("/uploads/documents/10/v3-plan.pdf")
+                .originalFileName("v3-plan.pdf")
+                .contentType("application/pdf")
+                .fileSize(333L)
+                .status(VersionStatus.APPROVED)
+                .createdBy(loggedUser)
+                .createdAt(LocalDateTime.now())
+                .parentVersion(parentVersion)
+                .build();
+        activeVersion.setId(30L);
+
+        document.setActiveVersion(activeVersion);
+
+        when(userRepository.findByUsername("authorUser")).thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(10L)).thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser))
+                .thenReturn(Optional.of(DocumentMember.builder()
+                        .document(document)
+                        .user(loggedUser)
+                        .role(DocumentRole.AUTHOR)
+                        .build()));
+
+        DocumentVersionDetailsResponse response = documentVersionService.getParentVersion(10L, "authorUser");
+
+        assertNotNull(response);
+        assertEquals(20L, response.getVersionId());
+        assertEquals(10L, response.getDocumentId());
+        assertEquals("Project Plan", response.getDocumentTitle());
+        assertEquals(2, response.getVersionNumber());
+        assertEquals("APPROVED", response.getStatus());
+        assertEquals("authorUser", response.getCreatedBy());
+        assertEquals("v2-plan.pdf", response.getOriginalFileName());
+        assertEquals("application/pdf", response.getContentType());
+        assertEquals(222L, response.getFileSize());
+    }
 }
