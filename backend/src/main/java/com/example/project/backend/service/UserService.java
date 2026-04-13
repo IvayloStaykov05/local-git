@@ -9,6 +9,7 @@ import com.example.project.backend.dto.response.user.UserRegisterResponse;
 import com.example.project.backend.dto.response.user.UserSearchResponse;
 import com.example.project.backend.model.entity.User;
 import com.example.project.backend.model.entity.VerificationToken;
+import com.example.project.backend.model.enums.SystemRole;
 import com.example.project.backend.repository.UserRepository;
 import com.example.project.backend.repository.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
@@ -169,5 +170,26 @@ public class UserService {
                 user.getUsername(),
                 "Personal information updated successfully"
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserSearchResponse> getAllUsers(String username){
+        User loggedUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Logged user not found"));
+
+        if(loggedUser.getSystemRole() != SystemRole.ADMIN){
+            throw new IllegalArgumentException("You don't have access to this information");
+        }
+
+        return userRepository.findAll()
+                .stream()
+                .map(user -> new UserSearchResponse(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        user.getEmail()
+                ))
+                .toList();
     }
 }

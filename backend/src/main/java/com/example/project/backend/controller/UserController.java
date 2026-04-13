@@ -60,4 +60,9 @@ public class UserController {
         UpdateMyInfoResponse response = userService.updateMyInfo(request.getInfo(), authentication.getName());
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/getAll")
+    public ResponseEntity<List<UserSearchResponse>> getAllUsers(Authentication authentication){
+        return ResponseEntity.ok(userService.getAllUsers(authentication.getName()));
+    }
 }
