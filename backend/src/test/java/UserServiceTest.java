@@ -351,4 +351,56 @@ class UserServiceTest {
 
         assertEquals("You must add personal information before you update it", exception.getMessage());
     }
+
+    @Test
+    void shouldGetAllUsersSuccessfullyWhenLoggedUserIsAdmin() {
+        User admin = User.builder()
+                .username("adminUser")
+                .systemRole(SystemRole.ADMIN)
+                .build();
+
+        User user1 = User.builder()
+                .username("ivan")
+                .firstName("Ivan")
+                .lastName("Petrov")
+                .email("ivan@example.com")
+                .build();
+        user1.setId(1L);
+
+        User user2 = User.builder()
+                .username("maria")
+                .firstName("Maria")
+                .lastName("Ivanova")
+                .email("maria@example.com")
+                .build();
+        user2.setId(2L);
+
+        when(userRepository.findByUsername("adminUser")).thenReturn(Optional.of(admin));
+        when(userRepository.findAll()).thenReturn(List.of(user1, user2));
+
+        List<UserSearchResponse> response = userService.getAllUsers("adminUser");
+
+        assertEquals(2, response.size());
+        assertEquals("ivan", response.get(0).getUsername());
+        assertEquals("maria", response.get(1).getUsername());
+    }
+
+    @Test
+    void shouldThrowWhenNonAdminTriesToGetAllUsers() {
+        User user = User.builder()
+                .username("normalUser")
+                .systemRole(SystemRole.USER)
+                .build();
+
+        when(userRepository.findByUsername("normalUser")).thenReturn(Optional.of(user));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.getAllUsers("normalUser")
+        );
+
+        assertEquals("You don't have access to this information", exception.getMessage());
+        verify(userRepository, never()).findAll();
+    }
+
 }
