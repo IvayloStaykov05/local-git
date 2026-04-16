@@ -9,6 +9,7 @@ import com.example.project.backend.service.AdminInvitationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,7 @@ public class AdminInvitationController {
     private final AdminInvitationService adminInvitationService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminInvitationResponse> inviteToBecomeAdmin(
             @RequestBody @Valid InviteAdminRequest request,
             Authentication authentication
@@ -30,6 +32,7 @@ public class AdminInvitationController {
     }
 
     @PostMapping("/{invitationId}/accept")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ActionResponse> acceptAdminInvitation(
             @PathVariable Long invitationId,
             Authentication authentication
@@ -41,6 +44,7 @@ public class AdminInvitationController {
     }
 
     @PostMapping("/{invitationId}/reject")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ActionResponse> rejectAdminInvitation(
             @PathVariable Long invitationId,
             Authentication authentication
@@ -51,6 +55,7 @@ public class AdminInvitationController {
     }
 
     @PostMapping("/create-profile")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CreateAdminProfileResponse> createAdminProfile(
             @RequestBody @Valid CreateAdminProfileRequest request,
             Authentication authentication

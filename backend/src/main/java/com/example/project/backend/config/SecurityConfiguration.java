@@ -5,9 +5,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -23,6 +25,7 @@ import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfiguration {
 
@@ -42,6 +45,19 @@ public class SecurityConfiguration {
                                 "/api/auth/forgot-password",
                                 "/api/auth/verify"
                         ).permitAll()
+
+                        // ADMIN endpoints
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // Admin invitation endpoints:
+                        // само admin да може да праща покана и да създава admin profile
+                        .requestMatchers(HttpMethod.POST, "/api/admin-invitations").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/admin-invitations/create-profile").hasRole("ADMIN")
+
+                        // accept/reject може да ги прави логнат потребителят, който е получил поканата
+                        .requestMatchers(HttpMethod.POST, "/api/admin-invitations/*/accept").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/admin-invitations/*/reject").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
