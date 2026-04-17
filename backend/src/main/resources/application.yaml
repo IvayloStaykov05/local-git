@@ -43,6 +43,8 @@ logging:
         SQL: DEBUG
         type:
           descriptor: TRACE
+  file:
+    path: logs
     name: logs/application-logs.log
   pattern:
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
