@@ -616,6 +616,319 @@ class DocumentVersionServiceTest {
         assertEquals(222L, response.getFileSize());
     }
 
+    @Test
+    void shouldThrowWhenLoggedUserNotFoundWhileCreatingVersion() {
+        CreateDocumentVersionRequest request = new CreateDocumentVersionRequest();
+        request.setDocumentId(1L);
+
+        MultipartFile file = new MockMultipartFile(
+                "file",
+                "v2-plan.pdf",
+                "application/pdf",
+                "new-file".getBytes()
+        );
+
+        when(userRepository.findByUsername("missingUser")).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentVersionService.createDocumentVersion(request, file, "missingUser")
+        );
+
+        assertEquals("Logged user not found", exception.getMessage());
+
+        verify(documentRepository, never()).findById(anyLong());
+        verify(documentMemberRepository, never()).findByDocumentAndUser(any(), any());
+        verify(documentFileStorageService, never()).saveFile(anyLong(), anyInt(), any());
+        verify(documentVersionRepository, never()).save(any(DocumentVersion.class));
+    }
+
+    @Test
+    void shouldThrowWhenUserHasNoAccessToDocumentWhileCreatingVersion() {
+        CreateDocumentVersionRequest request = new CreateDocumentVersionRequest();
+        request.setDocumentId(1L);
+
+        MultipartFile file = new MockMultipartFile(
+                "file",
+                "v2-plan.pdf",
+                "application/pdf",
+                "new-file".getBytes()
+        );
+
+        User loggedUser = User.builder().username("authorUser").build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .numberOfVersions(1)
+                .build();
+        document.setId(1L);
+
+        when(userRepository.findByUsername("authorUser")).thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentVersionService.createDocumentVersion(request, file, "authorUser")
+        );
+
+        assertEquals("You don't have access to the document", exception.getMessage());
+
+        verify(documentFileStorageService, never()).saveFile(anyLong(), anyInt(), any());
+        verify(documentVersionRepository, never()).save(any(DocumentVersion.class));
+    }
+
+    @Test
+    void shouldThrowWhenDocumentHasNoActiveVersionWhileCreatingVersion() {
+        CreateDocumentVersionRequest request = new CreateDocumentVersionRequest();
+        request.setDocumentId(1L);
+
+        MultipartFile file = new MockMultipartFile(
+                "file",
+                "v2-plan.pdf",
+                "application/pdf",
+                "new-file".getBytes()
+        );
+
+        User loggedUser = User.builder().username("authorUser").build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .activeVersion(null)
+                .numberOfVersions(1)
+                .createdBy(loggedUser)
+                .build();
+        document.setId(1L);
+
+        DocumentMember membership = DocumentMember.builder()
+                .document(document)
+                .user(loggedUser)
+                .role(DocumentRole.AUTHOR)
+                .build();
+
+        when(userRepository.findByUsername("authorUser")).thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser)).thenReturn(Optional.of(membership));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentVersionService.createDocumentVersion(request, file, "authorUser")
+        );
+
+        assertEquals("Document has no active version", exception.getMessage());
+
+        verify(documentFileStorageService, never()).saveFile(anyLong(), anyInt(), any());
+        verify(documentVersionRepository, never()).save(any(DocumentVersion.class));
+    }
+
+    @Test
+    void shouldThrowWhenApproverIsNotMember() {
+        ApproveDocumentVersionRequest request = new ApproveDocumentVersionRequest();
+        request.setDocumentId(1L);
+        request.setVersionId(2L);
+        request.setComment("Looks good");
+
+        User reviewer = User.builder().username("reviewerUser").build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(1L);
+
+        DocumentVersion version = DocumentVersion.builder()
+                .document(document)
+                .versionNumber(2)
+                .status(VersionStatus.DRAFT)
+                .build();
+        version.setId(2L);
+
+        when(userRepository.findByUsername("reviewerUser")).thenReturn(Optional.of(reviewer));
+        when(documentVersionRepository.findByIdAndDocumentId(2L, 1L)).thenReturn(Optional.of(version));
+        when(documentMemberRepository.findByDocumentAndUser(document, reviewer)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentVersionService.approveVersion(request, "reviewerUser")
+        );
+
+        assertEquals("User is not an authorized member for this action", exception.getMessage());
+
+        verify(documentVersionRepository, never()).save(any(DocumentVersion.class));
+        verify(documentRepository, never()).save(any(Document.class));
+        verify(commentRepository, never()).save(any(Comment.class));
+    }
+
+    @Test
+    void shouldThrowWhenApproverIsNotReviewer() {
+        ApproveDocumentVersionRequest request = new ApproveDocumentVersionRequest();
+        request.setDocumentId(1L);
+        request.setVersionId(2L);
+        request.setComment("Looks good");
+
+        User reviewer = User.builder().username("reviewerUser").build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(1L);
+
+        DocumentVersion version = DocumentVersion.builder()
+                .document(document)
+                .versionNumber(2)
+                .status(VersionStatus.DRAFT)
+                .build();
+        version.setId(2L);
+
+        DocumentMember membership = DocumentMember.builder()
+                .document(document)
+                .user(reviewer)
+                .role(DocumentRole.AUTHOR)
+                .build();
+
+        when(userRepository.findByUsername("reviewerUser")).thenReturn(Optional.of(reviewer));
+        when(documentVersionRepository.findByIdAndDocumentId(2L, 1L)).thenReturn(Optional.of(version));
+        when(documentMemberRepository.findByDocumentAndUser(document, reviewer)).thenReturn(Optional.of(membership));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentVersionService.approveVersion(request, "reviewerUser")
+        );
+
+        assertEquals("Only reviewers can approve versions", exception.getMessage());
+
+        verify(documentVersionRepository, never()).save(any(DocumentVersion.class));
+        verify(documentRepository, never()).save(any(Document.class));
+        verify(commentRepository, never()).save(any(Comment.class));
+    }
+
+    @Test
+    void shouldNotSaveCommentWhenApproveCommentIsNull() {
+        ApproveDocumentVersionRequest request = new ApproveDocumentVersionRequest();
+        request.setDocumentId(1L);
+        request.setVersionId(2L);
+        request.setComment(null);
+
+        User reviewer = User.builder().username("reviewerUser").build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(1L);
+
+        DocumentVersion version = DocumentVersion.builder()
+                .document(document)
+                .versionNumber(2)
+                .status(VersionStatus.DRAFT)
+                .build();
+        version.setId(2L);
+
+        DocumentMember membership = DocumentMember.builder()
+                .document(document)
+                .user(reviewer)
+                .role(DocumentRole.REVIEWER)
+                .build();
+
+        when(userRepository.findByUsername("reviewerUser")).thenReturn(Optional.of(reviewer));
+        when(documentVersionRepository.findByIdAndDocumentId(2L, 1L)).thenReturn(Optional.of(version));
+        when(documentMemberRepository.findByDocumentAndUser(document, reviewer)).thenReturn(Optional.of(membership));
+
+        ApproveDocumentVersionResponse response =
+                documentVersionService.approveVersion(request, "reviewerUser");
+
+        assertNotNull(response);
+        assertEquals("APPROVED", response.getStatus());
+        assertNull(response.getComment());
+
+        verify(commentRepository, never()).save(any(Comment.class));
+        verify(documentVersionRepository).save(version);
+        verify(documentRepository).save(document);
+    }
+
+    @Test
+    void shouldThrowWhenGettingActiveVersionWithoutAccess() {
+        User loggedUser = User.builder().username("authorUser").build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(10L);
+
+        when(userRepository.findByUsername("authorUser")).thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(10L)).thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentVersionService.getActiveVersion(10L, "authorUser")
+        );
+
+        assertEquals("You don't have access to the document", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenDocumentHasNoActiveVersion() {
+        User loggedUser = User.builder().username("authorUser").build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .activeVersion(null)
+                .build();
+        document.setId(10L);
+
+        when(userRepository.findByUsername("authorUser")).thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(10L)).thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser))
+                .thenReturn(Optional.of(DocumentMember.builder()
+                        .document(document)
+                        .user(loggedUser)
+                        .role(DocumentRole.AUTHOR)
+                        .build()));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentVersionService.getActiveVersion(10L, "authorUser")
+        );
+
+        assertEquals("Document has no active version", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenParentVersionDoesNotExist() {
+        User loggedUser = User.builder().username("authorUser").build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(10L);
+
+        DocumentVersion activeVersion = DocumentVersion.builder()
+                .document(document)
+                .versionNumber(3)
+                .status(VersionStatus.APPROVED)
+                .createdBy(loggedUser)
+                .parentVersion(null)
+                .build();
+        activeVersion.setId(30L);
+
+        document.setActiveVersion(activeVersion);
+
+        when(userRepository.findByUsername("authorUser")).thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(10L)).thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser))
+                .thenReturn(Optional.of(DocumentMember.builder()
+                        .document(document)
+                        .user(loggedUser)
+                        .role(DocumentRole.AUTHOR)
+                        .build()));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentVersionService.getParentVersion(10L, "authorUser")
+        );
+
+        assertEquals("Active version has no parent version", exception.getMessage());
+    }
+
 
 
 }

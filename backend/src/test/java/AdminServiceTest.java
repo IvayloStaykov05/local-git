@@ -170,4 +170,117 @@ class AdminServiceTest {
 
         assertEquals("Only admins can deactivate users.", exception.getMessage());
     }
+
+    @Test
+    void shouldThrowWhenNonAdminTriesToActivateUser() {
+        User user = User.builder()
+                .username("ivan")
+                .systemRole(SystemRole.USER)
+                .build();
+
+        when(userRepository.findByUsername("ivan")).thenReturn(Optional.of(user));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminService.activateUser(1L, "ivan")
+        );
+
+        assertEquals(" Only admins can activate users.", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenAdminNotFoundWhileDeactivatingUser() {
+        when(userRepository.findByUsername("missingAdmin")).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminService.deactivateUser(1L, "missingAdmin")
+        );
+
+        assertEquals("Admin not found.", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenUserToDeactivateIsNotFound() {
+        User admin = User.builder()
+                .username("adminUser")
+                .systemRole(SystemRole.ADMIN)
+                .build();
+
+        when(userRepository.findByUsername("adminUser")).thenReturn(Optional.of(admin));
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminService.deactivateUser(1L, "adminUser")
+        );
+
+        assertEquals("User not found.", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenDeletingOnlyVersionOfDocument() {
+        User admin = User.builder()
+                .username("adminUser")
+                .systemRole(SystemRole.ADMIN)
+                .build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(10L);
+
+        DocumentVersion version = DocumentVersion.builder()
+                .document(document)
+                .versionNumber(1)
+                .build();
+        version.setId(100L);
+
+        when(userRepository.findByUsername("adminUser")).thenReturn(Optional.of(admin));
+        when(documentVersionRepository.findById(100L)).thenReturn(Optional.of(version));
+        when(documentVersionRepository.countByDocument(document)).thenReturn(1L);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminService.deleteDocumentVersion(100L, "adminUser")
+        );
+
+        assertEquals("Cannot delete the only version of a document. Delete the whole document instead.", exception.getMessage());
+
+        verify(documentVersionRepository, never()).delete(any(DocumentVersion.class));
+    }
+
+    @Test
+    void shouldThrowWhenDeletingParentVersion() {
+        User admin = User.builder()
+                .username("adminUser")
+                .systemRole(SystemRole.ADMIN)
+                .build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(10L);
+
+        DocumentVersion version = DocumentVersion.builder()
+                .document(document)
+                .versionNumber(1)
+                .build();
+        version.setId(100L);
+
+        when(userRepository.findByUsername("adminUser")).thenReturn(Optional.of(admin));
+        when(documentVersionRepository.findById(100L)).thenReturn(Optional.of(version));
+        when(documentVersionRepository.countByDocument(document)).thenReturn(2L);
+        when(documentVersionRepository.existsByParentVersion(version)).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminService.deleteDocumentVersion(100L, "adminUser")
+        );
+
+        assertEquals("Cannot delete a version that is parent of another version.", exception.getMessage());
+
+        verify(documentVersionRepository, never()).delete(any(DocumentVersion.class));
+    }
+
 }

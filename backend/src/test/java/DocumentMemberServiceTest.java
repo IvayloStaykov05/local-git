@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.example.project.backend.dto.request.documentMember.DeleteDocumentMemberRequest;
+import com.example.project.backend.dto.response.documentMember.DeleteDocumentMemberResponse;
 
 import java.util.List;
 import java.util.Optional;
@@ -324,4 +326,171 @@ class DocumentMemberServiceTest {
         assertEquals("Petrov", response.get(1).getLastName());
         assertEquals("georgi@example.com", response.get(1).getEmail());
     }
+
+    @Test
+    void shouldDeleteDocumentMemberSuccessfully() {
+        DeleteDocumentMemberRequest request = new DeleteDocumentMemberRequest();
+        request.setDocumentId(1L);
+        request.setUsername("readerUser");
+
+        User loggedUser = User.builder()
+                .username("ownerUser")
+                .systemRole(SystemRole.USER)
+                .build();
+
+        User targetUser = User.builder()
+                .username("readerUser")
+                .build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(1L);
+
+        DocumentMember loggedMember = DocumentMember.builder()
+                .document(document)
+                .user(loggedUser)
+                .role(DocumentRole.OWNER)
+                .build();
+
+        DocumentMember targetMember = DocumentMember.builder()
+                .document(document)
+                .user(targetUser)
+                .role(DocumentRole.READER)
+                .build();
+
+        when(userRepository.findByUsername("ownerUser")).thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser)).thenReturn(Optional.of(loggedMember));
+        when(userRepository.findByUsername("readerUser")).thenReturn(Optional.of(targetUser));
+        when(documentMemberRepository.findByDocumentAndUser(document, targetUser)).thenReturn(Optional.of(targetMember));
+
+        DeleteDocumentMemberResponse response =
+                documentMemberService.deleteDocumentMember(request, "ownerUser");
+
+        assertNotNull(response);
+        assertEquals("readerUser", response.getUsername());
+        assertEquals("READER", response.getRole());
+        assertEquals(1L, response.getDocumentId());
+        assertEquals("You removed the user successfully", response.getMessage());
+
+        verify(documentMemberRepository).delete(targetMember);
+    }
+
+    @Test
+    void shouldThrowWhenNonOwnerTriesToDeleteDocumentMember() {
+        DeleteDocumentMemberRequest request = new DeleteDocumentMemberRequest();
+        request.setDocumentId(1L);
+        request.setUsername("readerUser");
+
+        User loggedUser = User.builder()
+                .username("authorUser")
+                .systemRole(SystemRole.USER)
+                .build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(1L);
+
+        DocumentMember loggedMember = DocumentMember.builder()
+                .document(document)
+                .user(loggedUser)
+                .role(DocumentRole.AUTHOR)
+                .build();
+
+        when(userRepository.findByUsername("authorUser")).thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser)).thenReturn(Optional.of(loggedMember));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentMemberService.deleteDocumentMember(request, "authorUser")
+        );
+
+        assertEquals("You don't have the rights to change roles for this document", exception.getMessage());
+
+        verify(documentMemberRepository, never()).delete(any(DocumentMember.class));
+    }
+
+    @Test
+    void shouldThrowWhenTryingToRemoveYourselfFromDocument() {
+        DeleteDocumentMemberRequest request = new DeleteDocumentMemberRequest();
+        request.setDocumentId(1L);
+        request.setUsername("ownerUser");
+
+        User loggedUser = User.builder()
+                .username("ownerUser")
+                .systemRole(SystemRole.USER)
+                .build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(1L);
+
+        DocumentMember loggedMember = DocumentMember.builder()
+                .document(document)
+                .user(loggedUser)
+                .role(DocumentRole.OWNER)
+                .build();
+
+        when(userRepository.findByUsername("ownerUser")).thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser)).thenReturn(Optional.of(loggedMember));
+        when(userRepository.findByUsername("ownerUser")).thenReturn(Optional.of(loggedUser));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser)).thenReturn(Optional.of(loggedMember));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentMemberService.deleteDocumentMember(request, "ownerUser")
+        );
+
+        assertEquals("You can't remove yourself from the document", exception.getMessage());
+
+        verify(documentMemberRepository, never()).delete(any(DocumentMember.class));
+    }
+
+    @Test
+    void shouldThrowWhenDeletingUserThatHasNoRoleInDocument() {
+        DeleteDocumentMemberRequest request = new DeleteDocumentMemberRequest();
+        request.setDocumentId(1L);
+        request.setUsername("readerUser");
+
+        User loggedUser = User.builder()
+                .username("ownerUser")
+                .systemRole(SystemRole.USER)
+                .build();
+
+        User targetUser = User.builder()
+                .username("readerUser")
+                .build();
+
+        Document document = Document.builder()
+                .title("Project Plan")
+                .build();
+        document.setId(1L);
+
+        DocumentMember loggedMember = DocumentMember.builder()
+                .document(document)
+                .user(loggedUser)
+                .role(DocumentRole.OWNER)
+                .build();
+
+        when(userRepository.findByUsername("ownerUser")).thenReturn(Optional.of(loggedUser));
+        when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
+        when(documentMemberRepository.findByDocumentAndUser(document, loggedUser)).thenReturn(Optional.of(loggedMember));
+        when(userRepository.findByUsername("readerUser")).thenReturn(Optional.of(targetUser));
+        when(documentMemberRepository.findByDocumentAndUser(document, targetUser)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentMemberService.deleteDocumentMember(request, "ownerUser")
+        );
+
+        assertEquals("The user has no role in the document", exception.getMessage());
+
+        verify(documentMemberRepository, never()).delete(any(DocumentMember.class));
+    }
+
 }

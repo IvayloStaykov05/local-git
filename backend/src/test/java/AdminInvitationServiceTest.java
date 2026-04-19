@@ -201,4 +201,192 @@ class AdminInvitationServiceTest {
         assertEquals("ivan.admin@example.com", response.getAdminEmail());
         assertEquals("Admin profile created successfully", response.getMessage());
     }
+
+    @Test
+    void shouldThrowWhenNonAdminSendsAdminInvitation() {
+        User user = User.builder()
+                .username("ivan")
+                .systemRole(SystemRole.USER)
+                .build();
+
+        InviteAdminRequest request = new InviteAdminRequest();
+        request.setUsername("maria");
+
+        when(userRepository.findByUsername("ivan")).thenReturn(Optional.of(user));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminInvitationService.inviteToBecomeAdmin("ivan", request)
+        );
+
+        assertEquals("Only admins can send invitations.", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenAdminInvitesSelf() {
+        User admin = User.builder()
+                .username("admin")
+                .systemRole(SystemRole.ADMIN)
+                .build();
+        admin.setId(1L);
+
+        InviteAdminRequest request = new InviteAdminRequest();
+        request.setUsername("admin");
+
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminInvitationService.inviteToBecomeAdmin("admin", request)
+        );
+
+        assertEquals("You cannot invite yourself.", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenPendingAdminInvitationAlreadyExists() {
+        User admin = User.builder()
+                .username("admin")
+                .systemRole(SystemRole.ADMIN)
+                .build();
+        admin.setId(1L);
+
+        User recipient = User.builder()
+                .username("ivan")
+                .build();
+        recipient.setId(2L);
+
+        InviteAdminRequest request = new InviteAdminRequest();
+        request.setUsername("ivan");
+
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(userRepository.findByUsername("ivan")).thenReturn(Optional.of(recipient));
+        when(adminInvitationRepository.existsByRecipientAndStatus(recipient, InvitationStatus.PENDING)).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminInvitationService.inviteToBecomeAdmin("admin", request)
+        );
+
+        assertEquals("This user already has a pending admin invitation", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenUserAcceptsAdminInvitationThatIsNotHis() {
+        User loggedUser = User.builder().username("ivan").build();
+        loggedUser.setId(2L);
+
+        User otherRecipient = User.builder().username("maria").build();
+        otherRecipient.setId(3L);
+
+        AdminInvitation invitation = AdminInvitation.builder()
+                .recipient(otherRecipient)
+                .status(InvitationStatus.PENDING)
+                .build();
+        invitation.setId(100L);
+
+        when(userRepository.findByUsername("ivan")).thenReturn(Optional.of(loggedUser));
+        when(adminInvitationRepository.findById(100L)).thenReturn(Optional.of(invitation));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminInvitationService.acceptAdminInvitation(100L, "ivan")
+        );
+
+        assertEquals("You cannot accept this admin invitation", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenAcceptingNonPendingAdminInvitation() {
+        User loggedUser = User.builder().username("ivan").build();
+        loggedUser.setId(2L);
+
+        AdminInvitation invitation = AdminInvitation.builder()
+                .recipient(loggedUser)
+                .status(InvitationStatus.ACCEPTED)
+                .build();
+        invitation.setId(100L);
+
+        when(userRepository.findByUsername("ivan")).thenReturn(Optional.of(loggedUser));
+        when(adminInvitationRepository.findById(100L)).thenReturn(Optional.of(invitation));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminInvitationService.acceptAdminInvitation(100L, "ivan")
+        );
+
+        assertEquals("This admin invitation is no longer pending", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenCreateAdminProfileWithoutAcceptedInvitation() {
+        User admin = User.builder()
+                .username("admin")
+                .systemRole(SystemRole.ADMIN)
+                .build();
+
+        User baseUser = User.builder()
+                .username("ivan")
+                .build();
+        baseUser.setId(2L);
+
+        AdminInvitation invitation = AdminInvitation.builder()
+                .recipient(baseUser)
+                .status(InvitationStatus.PENDING)
+                .build();
+        invitation.setId(100L);
+
+        CreateAdminProfileRequest request = new CreateAdminProfileRequest();
+        request.setInvitationId(100L);
+        request.setAdminUsername("ivan_admin");
+        request.setAdminEmail("ivan.admin@example.com");
+        request.setAdminPassword("secret123");
+
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(adminInvitationRepository.findById(100L)).thenReturn(Optional.of(invitation));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminInvitationService.createAdminProfile("admin", request)
+        );
+
+        assertEquals("The admin invitation must be accepted first", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenAdminProfileAlreadyExists() {
+        User admin = User.builder()
+                .username("admin")
+                .systemRole(SystemRole.ADMIN)
+                .build();
+
+        User baseUser = User.builder()
+                .username("ivan")
+                .build();
+        baseUser.setId(2L);
+
+        AdminInvitation invitation = AdminInvitation.builder()
+                .recipient(baseUser)
+                .status(InvitationStatus.ACCEPTED)
+                .build();
+        invitation.setId(100L);
+
+        CreateAdminProfileRequest request = new CreateAdminProfileRequest();
+        request.setInvitationId(100L);
+        request.setAdminUsername("ivan_admin");
+        request.setAdminEmail("ivan.admin@example.com");
+        request.setAdminPassword("secret123");
+
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(adminInvitationRepository.findById(100L)).thenReturn(Optional.of(invitation));
+        when(userRepository.existsByLinkedUserAndSystemRole(baseUser, SystemRole.ADMIN)).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> adminInvitationService.createAdminProfile("admin", request)
+        );
+
+        assertEquals("This user already has an admin profile", exception.getMessage());
+    }
+
 }
