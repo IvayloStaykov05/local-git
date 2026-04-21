@@ -1,0 +1,121 @@
+<mvc:View
+    controllerName="com.example.project.frontend.frontend.controller.AdminDashboard"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <Page showHeader="false" enableScrolling="false" class="dashboardPage">
+        <content>
+            <VBox class="dashboardShell" width="100%">
+
+                <HBox class="dashboardTopBar" alignItems="Center" justifyContent="SpaceBetween">
+                    <HBox alignItems="Center" class="dashboardBrandBox">
+                        <VBox class="dashboardBrandIcon"></VBox>
+                        <Title text="GIT-SAP Admin" class="dashboardBrandTitle" />
+                    </HBox>
+
+                    <HBox class="dashboardSearchWrapper" alignItems="Center" justifyContent="Center">
+                        <HBox class="dashboardSearchBox" alignItems="Center">
+                            <core:Icon src="sap-icon://search" class="dashboardSearchIcon" />
+                            <Input
+                                value="{admin>/search}"
+                                placeholder="Search all documents and all users"
+                                class="dashboardSearchInput"
+                                submit="onSearchAdmin"
+                                liveChange="onSearchAdminLiveChange" />
+                        </HBox>
+                    </HBox>
+
+                    <HBox class="dashboardLogoutWrapper" alignItems="Center" justifyContent="End">
+                        <Button
+                            text="Logout"
+                            press="onLogout"
+                            class="dashboardLogoutButton" />
+                    </HBox>
+                </HBox>
+
+                <HBox class="adminContentWrapper" justifyContent="SpaceBetween" alignItems="Stretch">
+
+                    <VBox class="glassCard adminTableCard">
+                        <HBox justifyContent="SpaceBetween" alignItems="Center">
+                            <Title text="All Projects" class="sectionMainTitle" />
+                            <Text text="•••" class="dotsText" />
+                        </HBox>
+
+                        <Table
+                            items="{admin>/documents}"
+                            class="adminTable"
+                            growing="true"
+                            growingScrollToLoad="true">
+
+                            <columns>
+                                <Column>
+                                    <Text text="Project Name" />
+                                </Column>
+                                <Column>
+                                    <Text text="Owner" />
+                                </Column>
+                                <Column hAlign="Center">
+                                    <Text text="Versions" />
+                                </Column>
+                                <Column>
+                                    <Text text="Created At" />
+                                </Column>
+                                <Column hAlign="End">
+                                    <Text text="Open" />
+                                </Column>
+                            </columns>
+
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <Text text="{admin>title}" />
+                                        <Text text="{admin>ownerUsername}" />
+                                        <Text text="{admin>versionsCount}" />
+                                        <Text text="{ path: 'admin>createdAt', formatter: '.formatDateTime' }" />
+                                        <Button
+                                            text="View"
+                                            type="Transparent"
+                                            press="onOpenDocument" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </VBox>
+
+                    <VBox class="glassCard adminUsersCard">
+                        <HBox justifyContent="SpaceBetween" alignItems="Center">
+                            <Title text="Users" class="sectionMainTitle" />
+                            <Text text="•••" class="dotsText" />
+                        </HBox>
+
+                        <ScrollContainer
+                            height="100%"
+                            width="100%"
+                            vertical="true"
+                            horizontal="false"
+                            class="peopleScroll">
+
+                            <List
+                                items="{admin>/users}"
+                                class="dashboardList"
+                                showSeparators="None">
+
+                                <CustomListItem>
+                                    <VBox class="listGlassItem adminUserListItem">
+                                        <Title text="{admin>username}" class="listItemTitle" />
+                                        <Text text="{admin>email}" class="listItemSubtitle" />
+                                        <Text
+                                            text="{= (${admin>firstName} || '') + ' ' + (${admin>lastName} || '') }"
+                                            class="listItemSubtitle" />
+                                    </VBox>
+                                </CustomListItem>
+                            </List>
+                        </ScrollContainer>
+                    </VBox>
+
+                </HBox>
+            </VBox>
+        </content>
+    </Page>
+</mvc:View>

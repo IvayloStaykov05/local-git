@@ -88,6 +88,11 @@
           "name": "RouteDocumentDetails",
           "pattern": "documents/{documentId}",
           "target": "TargetDocumentDetails"
+        },
+        {
+          "name": "RouteAdminDashboard",
+          "pattern": "admin",
+          "target": "TargetAdminDashboard"
         }
       ],
       "targets": {
@@ -110,6 +115,10 @@
         "TargetDocumentDetails": {
           "viewName": "DocumentDetails",
           "viewId": "DocumentDetails"
+        },
+        "TargetAdminDashboard": {
+          "viewName": "AdminDashboard",
+          "viewId": "AdminDashboard"
         }
       }
     }

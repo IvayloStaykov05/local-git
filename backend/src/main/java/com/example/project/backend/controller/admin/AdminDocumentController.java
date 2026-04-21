@@ -1,5 +1,6 @@
 package com.example.project.backend.controller.admin;
 
+import com.example.project.backend.dto.response.admin.AdminDocumentTableResponse;
 import com.example.project.backend.dto.response.documentVersion.DeleteDocumentResponse;
 import com.example.project.backend.dto.response.documentVersion.DeleteDocumentVersionResponse;
 import com.example.project.backend.service.AdminService;
@@ -7,10 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/documents")
@@ -19,6 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminDocumentController {
 
     private final AdminService adminService;
+
+    @GetMapping
+    public ResponseEntity<List<AdminDocumentTableResponse>> getAdminDocuments(
+            @RequestParam(required = false) String search,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                adminService.getAdminDocuments(authentication.getName(), search)
+        );
+    }
 
     @DeleteMapping("/versions/{versionId}")
     public ResponseEntity<DeleteDocumentVersionResponse> deleteDocumentVersion(

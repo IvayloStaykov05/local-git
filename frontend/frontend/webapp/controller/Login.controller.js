@@ -10,7 +10,27 @@ sap.ui.define([
 
         onInit: function () {
             var sToken = localStorage.getItem("token");
-            if (sToken) {
+            if (!sToken) {
+                return;
+            }
+
+            var oStoredUser = null;
+
+            try {
+                oStoredUser = JSON.parse(localStorage.getItem("user"));
+            } catch (e) {
+                oStoredUser = null;
+            }
+
+            if (!oStoredUser || !oStoredUser.systemRole) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                return;
+            }
+
+            if (oStoredUser.systemRole === "ADMIN") {
+                this.getOwnerComponent().getRouter().navTo("RouteAdminDashboard");
+            } else {
                 this.getOwnerComponent().getRouter().navTo("RouteDashboard");
             }
         },
@@ -45,24 +65,31 @@ sap.ui.define([
 
                 var oData = sResponseText ? JSON.parse(sResponseText) : null;
 
-                if (!oData || !oData.token) {
-                    MessageBox.error("Login response does not contain token");
+                if (!oData || !oData.token || !oData.systemRole) {
+                    MessageBox.error("Invalid login response from backend");
                     return;
                 }
 
-                localStorage.setItem("token", oData.token);
-                localStorage.setItem("user", JSON.stringify({
-                    id: oData.id,
-                    username: oData.username,
-                    email: oData.email,
+                var oUserData = {
+                    id: oData.id || null,
+                    username: oData.username || sUsernameOrEmail,
+                    email: oData.email || "",
                     systemRole: oData.systemRole
-                }));
+                };
+
+                localStorage.setItem("token", oData.token);
+                localStorage.setItem("user", JSON.stringify(oUserData));
 
                 this.byId("loginUsernameInput").setValue("");
                 this.byId("loginPasswordInput").setValue("");
 
                 MessageToast.show("Login successful");
-                this.getOwnerComponent().getRouter().navTo("RouteDashboard");
+
+                if (oUserData.systemRole === "ADMIN") {
+                    this.getOwnerComponent().getRouter().navTo("RouteAdminDashboard");
+                } else {
+                    this.getOwnerComponent().getRouter().navTo("RouteDashboard");
+                }
             } catch (oError) {
                 MessageBox.error("Cannot connect to backend: " + oError.message);
             }

@@ -8,10 +8,8 @@ import com.example.project.backend.dto.response.user.UserProfileResponse;
 import com.example.project.backend.dto.response.user.UserRegisterResponse;
 import com.example.project.backend.dto.response.user.UserSearchResponse;
 import com.example.project.backend.model.entity.User;
-import com.example.project.backend.model.entity.VerificationToken;
 import com.example.project.backend.model.enums.SystemRole;
 import com.example.project.backend.repository.UserRepository;
-import com.example.project.backend.repository.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,17 +17,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
-    private final EmailService emailService;
-    private final VerificationTokenRepository verificationTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
@@ -37,23 +31,9 @@ public class UserService {
         validateRegistration(request);
 
         User user = buildUser(request);
-
-        user.setEnabled(false);
+        user.setEnabled(true);
 
         User savedUser = userRepository.save(user);
-
-        String token = UUID.randomUUID().toString();
-
-        VerificationToken verificationToken = VerificationToken.builder()
-                .token(token)
-                .user(savedUser)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusHours(24))
-                .build();
-
-        verificationTokenRepository.save(verificationToken);
-
-        emailService.sendVerificationEmail(savedUser.getEmail(), token);
 
         logger.info("Registered user with id {} and username {}", savedUser.getId(), savedUser.getUsername());
 
@@ -61,7 +41,7 @@ public class UserService {
                 savedUser.getId(),
                 savedUser.getUsername(),
                 savedUser.getEmail(),
-                "User registered successfully. Please check your email to activate your account."
+                "User registered successfully."
         );
     }
 
