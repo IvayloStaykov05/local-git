@@ -1,4 +1,4 @@
-package com.example.project.backend.controller;
+package com.example.project.backend.controller.admin;
 
 import com.example.project.backend.dto.request.user.UserActivationRequest;
 import com.example.project.backend.dto.request.user.UserDeactivationRequest;
@@ -20,14 +20,14 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-public class AdminController {
+public class AdminUserController {
 
     private final AdminService adminService;
 
-    @PatchMapping("/users/deactivate")
+    @PatchMapping("/deactivate")
     public ResponseEntity<UserDeactivationResponse> deactivateUser(
             @RequestBody @Valid UserDeactivationRequest request,
             Authentication authentication
@@ -37,7 +37,7 @@ public class AdminController {
         );
     }
 
-    @PatchMapping("/users/activate")
+    @PatchMapping("/activate")
     public ResponseEntity<UserActivationResponse> activateUser(
             @RequestBody @Valid UserActivationRequest request,
             Authentication authentication
@@ -47,24 +47,5 @@ public class AdminController {
         );
     }
 
-    @DeleteMapping("/documents/versions/{versionId}")
-    public ResponseEntity<DeleteDocumentVersionResponse> deleteDocumentVersion(
-            @PathVariable Long versionId,
-            Authentication authentication
-    ) {
-        return ResponseEntity.ok(
-                adminService.deleteDocumentVersion(versionId, authentication.getName())
-        );
-    }
-
-    @DeleteMapping("/documents/{documentId}")
-    public ResponseEntity<DeleteDocumentResponse> deleteDocument(
-            @PathVariable Long documentId,
-            Authentication authentication
-    ) {
-        return ResponseEntity.ok(
-                adminService.deleteDocument(documentId, authentication.getName())
-        );
-    }
 
 }

@@ -45,26 +45,21 @@ public class SecurityConfiguration {
                                 "/api/auth/forgot-password",
                                 "/api/auth/verify"
                         ).permitAll()
-
                         // ADMIN endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
                         // Admin invitation endpoints:
                         // само admin да може да праща покана и да създава admin profile
                         .requestMatchers(HttpMethod.POST, "/api/admin-invitations").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/admin-invitations/create-profile").hasRole("ADMIN")
-
                         // accept/reject може да ги прави логнат потребителят, който е получил поканата
                         .requestMatchers(HttpMethod.POST, "/api/admin-invitations/*/accept").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/admin-invitations/*/reject").authenticated()
-
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(form -> form.disable())
                 .httpBasic(httpBasic -> httpBasic.disable());
-
         return httpSecurity.build();
     }
 

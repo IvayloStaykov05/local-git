@@ -1,4 +1,4 @@
-import com.example.project.backend.controller.AdminInvitationController;
+import com.example.project.backend.controller.admin.AdminInvitationController;
 import com.example.project.backend.dto.request.admin.CreateAdminProfileRequest;
 import com.example.project.backend.dto.request.admin.InviteAdminRequest;
 import com.example.project.backend.dto.response.admin.AdminInvitationResponse;

@@ -1,4 +1,5 @@
-import com.example.project.backend.controller.AdminController;
+import com.example.project.backend.controller.admin.AdminDocumentController;
+import com.example.project.backend.controller.admin.AdminUserController;
 import com.example.project.backend.dto.request.user.UserActivationRequest;
 import com.example.project.backend.dto.request.user.UserDeactivationRequest;
 import com.example.project.backend.dto.response.documentVersion.DeleteDocumentResponse;
@@ -28,7 +29,10 @@ class AdminControllerTest {
     private Authentication authentication;
 
     @InjectMocks
-    private AdminController adminController;
+    private AdminUserController adminUserController;
+
+    @InjectMocks
+    private AdminDocumentController adminDocumentController;
 
     @Test
     void shouldDeactivateUserSuccessfully() {
@@ -46,7 +50,7 @@ class AdminControllerTest {
         when(adminService.deactivateUser(5L, "adminUser")).thenReturn(serviceResponse);
 
         ResponseEntity<UserDeactivationResponse> response =
-                adminController.deactivateUser(request, authentication);
+                adminUserController.deactivateUser(request, authentication);
 
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -76,7 +80,7 @@ class AdminControllerTest {
         when(adminService.activateUser(5L, "adminUser")).thenReturn(serviceResponse);
 
         ResponseEntity<UserActivationResponse> response =
-                adminController.activateUser(request, authentication);
+                adminUserController.activateUser(request, authentication);
 
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -103,7 +107,7 @@ class AdminControllerTest {
         when(adminService.deleteDocumentVersion(11L, "adminUser")).thenReturn(serviceResponse);
 
         ResponseEntity<DeleteDocumentVersionResponse> response =
-                adminController.deleteDocumentVersion(11L, authentication);
+                adminDocumentController.deleteDocumentVersion(11L, authentication);
 
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -129,7 +133,7 @@ class AdminControllerTest {
         when(adminService.deleteDocument(7L, "adminUser")).thenReturn(serviceResponse);
 
         ResponseEntity<DeleteDocumentResponse> response =
-                adminController.deleteDocument(7L, authentication);
+                adminDocumentController.deleteDocument(7L, authentication);
 
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());

@@ -1,4 +1,4 @@
-package com.example.project.backend.controller;
+package com.example.project.backend.controller.admin;
 
 import com.example.project.backend.dto.request.admin.CreateAdminProfileRequest;
 import com.example.project.backend.dto.request.admin.InviteAdminRequest;
