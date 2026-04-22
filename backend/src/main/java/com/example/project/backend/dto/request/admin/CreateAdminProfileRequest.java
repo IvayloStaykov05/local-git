@@ -2,7 +2,6 @@ package com.example.project.backend.dto.request.admin;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,11 +9,14 @@ import lombok.Setter;
 @Setter
 public class CreateAdminProfileRequest {
 
-    @NotNull(message = "Invitation id is required.")
-    private Long invitationId;
-
-    @NotBlank(message =  "Admin username is required.")
+    @NotBlank(message = "Admin username is required.")
     private String adminUsername;
+
+    @NotBlank(message = "First name is required.")
+    private String firstName;
+
+    @NotBlank(message = "Last name is required.")
+    private String lastName;
 
     @NotBlank(message = "Admin email is required.")
     @Email(message = "Invalid email format.")
@@ -23,4 +25,3 @@ public class CreateAdminProfileRequest {
     @NotBlank(message = "Admin password is required.")
     private String adminPassword;
 }
-

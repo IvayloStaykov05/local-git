@@ -1,0 +1,62 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+   <Dialog
+    id="createAdminDialog"
+    title="Create New Admin"
+    contentWidth="620px"
+    contentHeight="auto"
+    draggable="true"
+    resizable="false"
+    verticalScrolling="true"
+    horizontalScrolling="false"
+    class="adminCreateDialog">
+
+        <content>
+            <VBox class="adminCreateDialogContent">
+
+                <VBox class="adminCreateIntroBox">
+                    <Title text="Create official admin account" level="H4" class="adminCreateTitle" />
+                    <Text
+                        text="This creates a standalone admin account with admin permissions. Username and email must be unique in the whole system."
+                        wrapping="true"
+                        class="adminCreateSubtitle" />
+                </VBox>
+
+                <VBox class="adminCreateFormGrid">
+                    <Label text="Admin username" class="adminCreateLabel" />
+                    <Input id="createAdminUsernameInput" placeholder="Enter admin username" class="adminCreateInput" />
+
+                    <Label text="First name" class="adminCreateLabel" />
+                    <Input id="createAdminFirstNameInput" placeholder="Enter first name" class="adminCreateInput" />
+
+                    <Label text="Last name" class="adminCreateLabel" />
+                    <Input id="createAdminLastNameInput" placeholder="Enter last name" class="adminCreateInput" />
+
+                    <Label text="Email" class="adminCreateLabel" />
+                    <Input id="createAdminEmailInput" type="Email" placeholder="Enter admin email" class="adminCreateInput" />
+
+                    <Label text="Password" class="adminCreateLabel" />
+                    <Input id="createAdminPasswordInput" type="Password" placeholder="Enter password" class="adminCreateInput" />
+
+                    <Label text="Confirm password" class="adminCreateLabel" />
+                    <Input id="createAdminConfirmPasswordInput" type="Password" placeholder="Repeat password" class="adminCreateInput" />
+                </VBox>
+
+            </VBox>
+        </content>
+
+        <buttons>
+    <Button
+        text="Close"
+        press=".onCloseCreateAdminDialog"
+        class="adminSecondaryDialogButton" />
+
+    <Button
+        text="Create Admin"
+        press=".onSubmitCreateAdmin"
+        class="adminPrimaryDialogButton" />
+</buttons>
+    </Dialog>
+</core:FragmentDefinition>

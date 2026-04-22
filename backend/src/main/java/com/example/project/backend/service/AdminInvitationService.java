@@ -5,6 +5,7 @@ import com.example.project.backend.dto.request.admin.CreateAdminProfileRequest;
 import com.example.project.backend.dto.request.admin.InviteAdminRequest;
 import com.example.project.backend.dto.response.admin.AdminInvitationResponse;
 import com.example.project.backend.dto.response.admin.CreateAdminProfileResponse;
+import com.example.project.backend.dto.response.invite.ActionResponse;
 import com.example.project.backend.model.entity.AdminInvitation;
 import com.example.project.backend.model.entity.User;
 import com.example.project.backend.model.enums.InvitationStatus;
@@ -18,8 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.example.project.backend.dto.response.invite.ActionResponse;
-
 
 import java.time.LocalDateTime;
 
@@ -32,7 +31,6 @@ public class AdminInvitationService {
     private final NotificationService notificationService;
     private final PasswordEncoder passwordEncoder;
     private static final Logger logger = LoggerFactory.getLogger(AdminInvitationService.class);
-
 
     @Transactional
     public AdminInvitationResponse inviteToBecomeAdmin(String adminUsername, InviteAdminRequest request) {
@@ -57,8 +55,9 @@ public class AdminInvitationService {
 
         if (admin.getId().equals(recipient.getId())) {
             logger.error("{} user with id {} tried to invite themself", errorMsg, admin.getId());
-            throw new IllegalArgumentException(("You cannot invite yourself."));
+            throw new IllegalArgumentException("You cannot invite yourself.");
         }
+
         if (adminInvitationRepository.existsByRecipientAndStatus(recipient, InvitationStatus.PENDING)) {
             logger.error("{} user with id {} already has a pending admin invitation", errorMsg, recipient.getId());
             throw new IllegalArgumentException("This user already has a pending admin invitation");
@@ -89,7 +88,6 @@ public class AdminInvitationService {
                 savedInvitation.getStatus().name(),
                 "Admin invitation sent successfully"
         );
-
     }
     @Transactional
     public CreateAdminProfileResponse acceptAdminInvitation(
@@ -171,7 +169,7 @@ public class AdminInvitationService {
 
         User loggedUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
-                    logger.error("{} logged user with username {] not found", errorMsg, username);
+                    logger.error("{} logged user with username {} not found", errorMsg, username);
                     return new IllegalArgumentException("Logged user not found");
                 });
 
@@ -221,56 +219,44 @@ public class AdminInvitationService {
             throw new IllegalArgumentException("Only admins can create admin profiles");
         }
 
-        AdminInvitation invitation = adminInvitationRepository.findById(request.getInvitationId())
-                .orElseThrow(() -> {
-                    logger.error("{} admin invitation with id {} not found", errorMsg, request.getInvitationId());
-                    return new IllegalArgumentException("Admin invitation not found");
-                });
-
-        if (invitation.getStatus() != InvitationStatus.ACCEPTED) {
-            logger.error("{} admin invitation with id {} is not yet accepted", errorMsg, invitation.getId());
-            throw new IllegalArgumentException("The admin invitation must be accepted first");
-        }
-
-        User baseUser = invitation.getRecipient();
-
-        if (userRepository.existsByLinkedUserAndSystemRole(baseUser, SystemRole.ADMIN)) {
-            logger.error("{} user with id {} already has an admin profile", errorMsg, baseUser.getId());
-            throw new IllegalArgumentException("This user already has an admin profile");
-        }
-
         if (userRepository.existsByUsername(request.getAdminUsername())) {
             logger.error("{} admin username {} already exists", errorMsg, request.getAdminUsername());
-            throw new IllegalArgumentException("Admin username already exists");
+            throw new IllegalArgumentException("Username already exists");
         }
 
         if (userRepository.existsByEmail(request.getAdminEmail())) {
             logger.error("{} admin email {} already exists", errorMsg, request.getAdminEmail());
-            throw new IllegalArgumentException("Admin email already exists");
+            throw new IllegalArgumentException("Email already exists");
         }
 
         User adminProfile = User.builder()
                 .username(request.getAdminUsername())
-                .firstName(baseUser.getFirstName())
-                .lastName(baseUser.getLastName())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
                 .email(request.getAdminEmail())
                 .password(passwordEncoder.encode(request.getAdminPassword()))
                 .enabled(true)
                 .active(true)
                 .systemRole(SystemRole.ADMIN)
-                .linkedUser(baseUser)
-                .myInfo(baseUser.getMyInfo())
+                .linkedUser(null)
                 .build();
 
         User savedAdminProfile = userRepository.save(adminProfile);
 
-        logger.info("Admin profile of user with id {} successfully created by admin with id {}", baseUser.getId(), admin.getId());
+        logger.info(
+                "Admin with id {} successfully created new admin profile with id {} and username {}",
+                admin.getId(),
+                savedAdminProfile.getId(),
+                savedAdminProfile.getUsername()
+        );
 
         return new CreateAdminProfileResponse(
                 savedAdminProfile.getId(),
-                baseUser.getId(),
                 savedAdminProfile.getUsername(),
+                savedAdminProfile.getFirstName(),
+                savedAdminProfile.getLastName(),
                 savedAdminProfile.getEmail(),
+                savedAdminProfile.getSystemRole(),
                 "Admin profile created successfully"
         );
     }

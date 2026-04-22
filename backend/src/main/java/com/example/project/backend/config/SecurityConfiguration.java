@@ -40,67 +40,58 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                "/api/auth/register",
                                 "/api/auth/login",
+                                "/api/auth/register",
                                 "/api/auth/forgot-password",
-                                "/api/auth/verify"
+                                "/api/test/**"
                         ).permitAll()
-                        // ADMIN endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        // Admin invitation endpoints:
-                        // само admin да може да праща покана и да създава admin profile
-                        .requestMatchers(HttpMethod.POST, "/api/admin-invitations").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/admin-invitations/create-profile").hasRole("ADMIN")
-                        // accept/reject може да ги прави логнат потребителят, който е получил поканата
-                        .requestMatchers(HttpMethod.POST, "/api/admin-invitations/*/accept").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/admin-invitations/*/reject").authenticated()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(form -> form.disable())
                 .httpBasic(httpBasic -> httpBasic.disable());
+
         return httpSecurity.build();
     }
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider =
-                new DaoAuthenticationProvider(customUserDetailsService);
-
-        provider.setPasswordEncoder(encoder());
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(customUserDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        return new CorsConfigurationSource() {
-            @Override
-            public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-                CorsConfiguration corsConfiguration = new CorsConfiguration();
-                corsConfiguration.setAllowedOrigins(Arrays.asList(
-                        "http://localhost:8080",
-                        "http://localhost:8081"
-                ));
-                corsConfiguration.setAllowedMethods(Arrays.asList(
-                        "GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"
-                ));
-                corsConfiguration.setAllowCredentials(true);
-                corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
-                corsConfiguration.setExposedHeaders(Arrays.asList("Authorization"));
-                corsConfiguration.setMaxAge(3600L);
-                return corsConfiguration;
-            }
+        return request -> {
+            CorsConfiguration config = new CorsConfiguration();
+
+            config.setAllowedOriginPatterns(Arrays.asList(
+                    "http://localhost:*",
+                    "http://127.0.0.1:*"
+            ));
+
+            config.setAllowedMethods(Arrays.asList(
+                    "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+            ));
+
+            config.setAllowedHeaders(Collections.singletonList("*"));
+            config.setExposedHeaders(Arrays.asList("Authorization"));
+            config.setAllowCredentials(true);
+
+            return config;
         };
     }
 
     @Bean
-    public PasswordEncoder encoder() {
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }

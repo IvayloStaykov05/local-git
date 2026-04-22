@@ -12,7 +12,8 @@ sap.ui.define([
     "sap/m/Text",
     "sap/m/HBox",
     "sap/m/SegmentedButton",
-    "sap/m/SegmentedButtonItem"
+    "sap/m/SegmentedButtonItem",
+    "sap/m/TextArea"
 ], function (
     Controller,
     JSONModel,
@@ -27,7 +28,8 @@ sap.ui.define([
     Text,
     HBox,
     SegmentedButton,
-    SegmentedButtonItem
+    SegmentedButtonItem,
+    TextArea
 ) {
     "use strict";
 
@@ -39,6 +41,7 @@ sap.ui.define([
                 description: "",
                 createdBy: "",
                 currentUserRole: "",
+                currentUsername: "",
                 activeVersionNumber: null,
                 activeVersionId: null,
                 activeFileName: "",
@@ -69,24 +72,36 @@ sap.ui.define([
             this._loadDocument(sDocumentId);
         },
 
-        _loadDocument: async function (sDocumentId) {
-            var sToken = localStorage.getItem("token");
+        _getAuthHeaders: function () {
+            return {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            };
+        },
 
+        _getLoggedUser: function () {
+            try {
+                return JSON.parse(localStorage.getItem("user") || "{}");
+            } catch (e) {
+                return {};
+            }
+        },
+
+        _loadDocument: async function (sDocumentId) {
             try {
                 var oResponse = await fetch("http://localhost:8080/api/documents/" + sDocumentId, {
                     method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + sToken
-                    }
+                    headers: this._getAuthHeaders()
                 });
 
                 var sText = await oResponse.text();
+
                 if (!oResponse.ok) {
                     throw new Error(sText || "Document loading failed");
                 }
 
                 var oDocument = sText ? JSON.parse(sText) : {};
+                var oLoggedUser = this._getLoggedUser();
 
                 this.getView().getModel("document").setData({
                     id: oDocument.id || null,
@@ -94,6 +109,7 @@ sap.ui.define([
                     description: oDocument.description || "",
                     createdBy: oDocument.createdBy || "",
                     currentUserRole: oDocument.currentUserRole || "",
+                    currentUsername: oLoggedUser.username || "",
                     activeVersionNumber: oDocument.activeVersionNumber || null,
                     activeVersionId: oDocument.activeVersionId || null,
                     activeFileName: oDocument.activeFileName || "",
@@ -111,25 +127,23 @@ sap.ui.define([
         },
 
         _loadVersions: async function (iDocumentId) {
-            var sToken = localStorage.getItem("token");
-
             try {
                 var oResponse = await fetch("http://localhost:8080/api/documentVersions/history", {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + sToken
-                    },
-                    body: JSON.stringify({ documentId: iDocumentId })
+                    headers: this._getAuthHeaders(),
+                    body: JSON.stringify({
+                        documentId: iDocumentId
+                    })
                 });
 
                 var sText = await oResponse.text();
+
                 if (!oResponse.ok) {
                     throw new Error(sText || "Version history loading failed");
                 }
 
                 var aVersions = sText ? JSON.parse(sText) : [];
-                this.getView().getModel("document").setProperty("/versions", aVersions);
+                this.getView().getModel("document").setProperty("/versions", Array.isArray(aVersions) ? aVersions : []);
             } catch (oError) {
                 MessageBox.error("Неуспешно зареждане на версиите: " + oError.message);
             }
@@ -139,7 +153,7 @@ sap.ui.define([
             var sRole = this.getView().getModel("document").getProperty("/currentUserRole");
 
             if (sRole !== "OWNER" && sRole !== "AUTHOR") {
-                MessageBox.warning("Само owner или author може да качва нова версия.");
+                MessageBox.warning("Нямаш право да добавяш нова версия.");
                 return;
             }
 
@@ -153,7 +167,6 @@ sap.ui.define([
                     if (oFile) {
                         this._uploadNewVersion(oFile);
                     }
-
                     oEvent.target.value = "";
                 }.bind(this));
 
@@ -166,7 +179,6 @@ sap.ui.define([
         _uploadNewVersion: async function (oFile) {
             var oDocumentModel = this.getView().getModel("document");
             var iDocumentId = oDocumentModel.getProperty("/id");
-            var sToken = localStorage.getItem("token");
 
             if (!iDocumentId) {
                 MessageBox.error("Липсва document id.");
@@ -186,7 +198,7 @@ sap.ui.define([
                 var oResponse = await fetch("http://localhost:8080/api/documentVersions/createNew", {
                     method: "POST",
                     headers: {
-                        "Authorization": "Bearer " + sToken
+                        "Authorization": "Bearer " + localStorage.getItem("token")
                     },
                     body: oFormData
                 });
@@ -198,7 +210,6 @@ sap.ui.define([
                 }
 
                 MessageToast.show("Новата версия е качена успешно.");
-
                 await this._loadDocument(iDocumentId);
             } catch (oError) {
                 MessageBox.error("Неуспешно качване на нова версия: " + oError.message);
@@ -213,7 +224,6 @@ sap.ui.define([
 
             var oVersion = oContext.getObject();
             var oDocument = this.getView().getModel("document").getData();
-            var sToken = localStorage.getItem("token");
             var iVersionId = oVersion.versionId;
 
             try {
@@ -222,7 +232,7 @@ sap.ui.define([
                     {
                         method: "GET",
                         headers: {
-                            "Authorization": "Bearer " + sToken
+                            "Authorization": "Bearer " + localStorage.getItem("token")
                         }
                     }
                 );
@@ -245,7 +255,6 @@ sap.ui.define([
                     );
                     this.getView().getModel("document").setProperty("/activeFileName", sFileName);
                     this.getView().getModel("document").setProperty("/activeContentType", sContentType);
-
                     return;
                 }
 
@@ -258,7 +267,6 @@ sap.ui.define([
                     setTimeout(function () {
                         URL.revokeObjectURL(sBlobUrl);
                     }, 10000);
-
                     return;
                 }
 
@@ -276,7 +284,6 @@ sap.ui.define([
 
             var oVersion = oContext.getObject();
             var oDocument = this.getView().getModel("document").getData();
-            var sToken = localStorage.getItem("token");
             var iVersionId = oVersion.versionId;
 
             try {
@@ -285,7 +292,7 @@ sap.ui.define([
                     {
                         method: "GET",
                         headers: {
-                            "Authorization": "Bearer " + sToken
+                            "Authorization": "Bearer " + localStorage.getItem("token")
                         }
                     }
                 );
@@ -472,7 +479,6 @@ sap.ui.define([
         },
 
         _searchUsers: async function (sQuery) {
-            var sToken = localStorage.getItem("token");
             var sUrl = "http://localhost:8080/api/users/search";
 
             if (sQuery && sQuery.trim()) {
@@ -482,10 +488,7 @@ sap.ui.define([
             try {
                 var oResponse = await fetch(sUrl, {
                     method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + sToken
-                    }
+                    headers: this._getAuthHeaders()
                 });
 
                 var sText = await oResponse.text();
@@ -516,7 +519,6 @@ sap.ui.define([
             var sUsername = oDialogModel.getProperty("/selectedUsername");
             var sRole = oDialogModel.getProperty("/selectedRole");
             var oDocument = this.getView().getModel("document").getData();
-            var sToken = localStorage.getItem("token");
 
             if (!sUsername) {
                 MessageBox.warning("Избери user от списъка.");
@@ -531,10 +533,7 @@ sap.ui.define([
             try {
                 var oResponse = await fetch("http://localhost:8080/api/documentMembers/createNewMember", {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + sToken
-                    },
+                    headers: this._getAuthHeaders(),
                     body: JSON.stringify({
                         documentId: oDocument.id,
                         owner: oDocument.createdBy,
@@ -555,6 +554,292 @@ sap.ui.define([
             } catch (oError) {
                 MessageBox.error("Неуспешно добавяне на човек: " + oError.message);
             }
+        },
+
+        onRemoveMemberPress: function (oEvent) {
+            var oContext = oEvent.getSource().getBindingContext("document");
+            if (!oContext) {
+                return;
+            }
+
+            var oMember = oContext.getObject();
+            var oDocument = this.getView().getModel("document").getData();
+            var that = this;
+
+            MessageBox.confirm(
+                "Сигурен ли си, че искаш да премахнеш ролята на " + oMember.username + " от този проект?",
+                {
+                    title: "Remove role",
+                    actions: [MessageBox.Action.DELETE, MessageBox.Action.CANCEL],
+                    emphasizedAction: MessageBox.Action.DELETE,
+                    onClose: async function (sAction) {
+                        if (sAction !== MessageBox.Action.DELETE) {
+                            return;
+                        }
+
+                        await that._removeMember(oDocument.id, oMember.username);
+                    }
+                }
+            );
+        },
+
+        _removeMember: async function (iDocumentId, sUsername) {
+            try {
+                var oResponse = await fetch("http://localhost:8080/api/documentMembers/deleteMember", {
+                    method: "DELETE",
+                    headers: this._getAuthHeaders(),
+                    body: JSON.stringify({
+                        documentId: iDocumentId,
+                        username: sUsername
+                    })
+                });
+
+                var sText = await oResponse.text();
+
+                if (!oResponse.ok) {
+                    throw new Error(sText || "Cannot remove member");
+                }
+
+                MessageToast.show("Ролята е премахната успешно.");
+                await this._loadDocument(iDocumentId);
+            } catch (oError) {
+                MessageBox.error("Неуспешно премахване на ролята: " + oError.message);
+            }
+        },
+
+        onApproveVersionPress: function (oEvent) {
+            var oContext = oEvent.getSource().getBindingContext("document");
+            if (!oContext) {
+                return;
+            }
+
+            var oVersion = oContext.getObject();
+            var oDocument = this.getView().getModel("document").getData();
+
+            if (oDocument.currentUserRole !== "REVIEWER") {
+                MessageBox.warning("Само reviewer може да approve-ва версии.");
+                return;
+            }
+
+            if (oVersion.status !== "DRAFT") {
+                MessageBox.warning("Само draft версии могат да бъдат approve-нати.");
+                return;
+            }
+
+            this._openApproveVersionDialog(oDocument.id, oVersion);
+        },
+
+        _openApproveVersionDialog: function (iDocumentId, oVersion) {
+            var oCommentArea = new TextArea({
+                width: "100%",
+                rows: 5,
+                growing: true,
+                growingMaxLines: 8,
+                placeholder: "Optional comment..."
+            }).addStyleClass("versionDecisionTextArea");
+
+            var oDialog = new Dialog({
+                title: "Approve version " + oVersion.versionNumber,
+                contentWidth: "520px",
+                stretchOnPhone: true,
+                content: [
+                    new VBox({
+                        items: [
+                            new Text({
+                                text: "Може да добавиш коментар, но не е задължително."
+                            }).addStyleClass("versionDecisionDialogText"),
+                            oCommentArea
+                        ]
+                    }).addStyleClass("versionDecisionDialogContent")
+                ],
+                beginButton: new Button({
+                    text: "Approve",
+                    press: async function () {
+                        await this._submitApproveVersion(iDocumentId, oVersion.versionId, oCommentArea.getValue());
+                        oDialog.close();
+                    }.bind(this)
+                }).addStyleClass("versionApproveDialogButton"),
+                endButton: new Button({
+                    text: "Cancel",
+                    press: function () {
+                        oDialog.close();
+                    }
+                }).addStyleClass("versionCancelDialogButton"),
+                afterClose: function () {
+                    oDialog.destroy();
+                }
+            });
+
+            this.getView().addDependent(oDialog);
+            oDialog.open();
+        },
+
+        _submitApproveVersion: async function (iDocumentId, iVersionId, sComment) {
+            var sToken = localStorage.getItem("token");
+
+            try {
+                var oResponse = await fetch("http://localhost:8080/api/documentVersions/approve", {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + sToken
+                    },
+                    body: JSON.stringify({
+                        documentId: iDocumentId,
+                        versionId: iVersionId,
+                        comment: sComment ? sComment.trim() : null
+                    })
+                });
+
+                var sText = await oResponse.text();
+
+                if (!oResponse.ok) {
+                    throw new Error(sText || "Cannot approve version");
+                }
+
+                MessageToast.show("Версията е approve-ната успешно.");
+                await this._loadDocument(iDocumentId);
+            } catch (oError) {
+                MessageBox.error("Неуспешен approve: " + oError.message);
+            }
+        },
+
+        onRejectVersionPress: function (oEvent) {
+            var oContext = oEvent.getSource().getBindingContext("document");
+            if (!oContext) {
+                return;
+            }
+
+            var oVersion = oContext.getObject();
+            var oDocument = this.getView().getModel("document").getData();
+
+            if (oDocument.currentUserRole !== "REVIEWER") {
+                MessageBox.warning("Само reviewer може да reject-ва версии.");
+                return;
+            }
+
+            if (oVersion.status !== "DRAFT") {
+                MessageBox.warning("Само draft версии могат да бъдат reject-нати.");
+                return;
+            }
+
+            this._openRejectVersionDialog(oDocument.id, oVersion);
+        },
+
+        _openRejectVersionDialog: function (iDocumentId, oVersion) {
+            var oReasonArea = new TextArea({
+                width: "100%",
+                rows: 5,
+                growing: true,
+                growingMaxLines: 8,
+                placeholder: "Write rejection reason..."
+            }).addStyleClass("versionDecisionTextArea");
+
+            var oDialog = new Dialog({
+                title: "Reject version " + oVersion.versionNumber,
+                contentWidth: "520px",
+                stretchOnPhone: true,
+                content: [
+                    new VBox({
+                        items: [
+                            new Text({
+                                text: "Причината за reject е задължителна."
+                            }).addStyleClass("versionDecisionDialogText"),
+                            oReasonArea
+                        ]
+                    }).addStyleClass("versionDecisionDialogContent")
+                ],
+                beginButton: new Button({
+                    text: "Reject",
+                    press: async function () {
+                        var sReason = oReasonArea.getValue();
+
+                        if (!sReason || !sReason.trim()) {
+                            MessageBox.warning("Трябва да въведеш причина за reject.");
+                            return;
+                        }
+
+                        await this._submitRejectVersion(iDocumentId, oVersion.versionId, sReason.trim());
+                        oDialog.close();
+                    }.bind(this)
+                }).addStyleClass("versionRejectDialogButton"),
+                endButton: new Button({
+                    text: "Cancel",
+                    press: function () {
+                        oDialog.close();
+                    }
+                }).addStyleClass("versionCancelDialogButton"),
+                afterClose: function () {
+                    oDialog.destroy();
+                }
+            });
+
+            this.getView().addDependent(oDialog);
+            oDialog.open();
+        },
+
+        _submitRejectVersion: async function (iDocumentId, iVersionId, sReason) {
+            var sToken = localStorage.getItem("token");
+
+            try {
+                var oResponse = await fetch("http://localhost:8080/api/documentVersions/reject", {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + sToken
+                    },
+                    body: JSON.stringify({
+                        documentId: iDocumentId,
+                        versionId: iVersionId,
+                        reason: sReason
+                    })
+                });
+
+                var sText = await oResponse.text();
+
+                if (!oResponse.ok) {
+                    throw new Error(sText || "Cannot reject version");
+                }
+
+                MessageToast.show("Версията е reject-ната успешно.");
+                await this._loadDocument(iDocumentId);
+            } catch (oError) {
+                MessageBox.error("Неуспешен reject: " + oError.message);
+            }
+        },
+
+        formatCanRemoveMember: function (sCurrentRole, sMemberUsername, sOwnerUsername, sCurrentUsername) {
+            var bCanManage = sCurrentRole === "OWNER" || sCurrentRole === "ADMIN";
+
+            if (!bCanManage) {
+                return false;
+            }
+
+            if (!sMemberUsername) {
+                return false;
+            }
+
+            if (sMemberUsername === sOwnerUsername) {
+                return false;
+            }
+
+            if (sMemberUsername === sCurrentUsername) {
+                return false;
+            }
+
+            return true;
+        },
+
+        formatReviewerActionVisible: function (sCurrentUserRole, sVersionStatus) {
+            return sCurrentUserRole === "REVIEWER" && sVersionStatus === "DRAFT";
+        },
+
+        formatApprovedByTextVisible: function (sApprovedBy) {
+            return !!sApprovedBy;
+        },
+
+        formatRejectedByTextVisible: function (sRejectedBy) {
+            return !!sRejectedBy;
         }
     });
 });

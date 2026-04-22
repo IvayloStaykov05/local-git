@@ -26,7 +26,12 @@
                         </HBox>
                     </HBox>
 
-                    <HBox class="dashboardLogoutWrapper" alignItems="Center" justifyContent="End">
+                    <HBox class="dashboardActionsWrapper" alignItems="Center" justifyContent="End">
+                        <Button
+                            text="Create Admin"
+                            press="onOpenCreateAdminDialog"
+                            class="dashboardCreateAdminButton" />
+
                         <Button
                             text="Logout"
                             press="onLogout"

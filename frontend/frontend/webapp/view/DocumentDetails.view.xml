@@ -46,16 +46,37 @@
                     </VBox>
 
                     <VBox class="documentDetailsSideColumn">
-                        <VBox class="glassCard documentTeamCard">
+                       <VBox class="glassCard documentTeamCard">
                             <Title text="Team" class="sectionMainTitle" />
+
                             <List items="{document>/teamMembers}" showSeparators="None" class="dashboardList">
                                 <CustomListItem>
-                                    <HBox class="listGlassItem personItem" justifyContent="SpaceBetween" alignItems="Center">
-                                        <VBox>
+                                    <HBox class="listGlassItem personItem documentMemberRow" justifyContent="SpaceBetween" alignItems="Center" width="100%">
+
+                                        <VBox class="documentMemberInfoBox">
                                             <Title text="{document>username}" class="listItemTitle" />
                                             <Text text="{document>email}" class="listItemSubtitle" />
                                         </VBox>
-                                        <Text text="{document>role}" class="documentMemberRoleText" />
+
+                                        <HBox class="documentMemberActionsBox" alignItems="Center">
+                                            <Text text="{document>role}" class="documentMemberRoleText" />
+
+                                            <Button
+                                                text="Remove"
+                                                type="Transparent"
+                                                press=".onRemoveMemberPress"
+                                                class="documentRemoveMemberButton"
+                                                visible="{
+                                                    parts: [
+                                                        { path: 'document>/currentUserRole' },
+                                                        { path: 'document>username' },
+                                                        { path: 'document>/createdBy' },
+                                                        { path: 'document>/currentUsername' }
+                                                    ],
+                                                    formatter: '.formatCanRemoveMember'
+                                                }" />
+                                        </HBox>
+
                                     </HBox>
                                 </CustomListItem>
                             </List>
@@ -72,21 +93,57 @@
                                     visible="{= ${document>/currentUserRole} === 'OWNER' || ${document>/currentUserRole} === 'AUTHOR' }" />
                             </HBox>
 
-                            <List items="{document>/versions}" showSeparators="None" class="dashboardList">
-                                <CustomListItem>
-                                    <VBox class="listGlassItem documentVersionItem">
-                                        <HBox justifyContent="SpaceBetween" alignItems="Center">
-                                            <Title text="Version {document>versionNumber}" class="listItemTitle" />
-                                            <Text text="{document>status}" class="documentVersionStatusText" />
-                                        </HBox>
-                                        <Text text="Created by: {document>createdBy}" class="listItemSubtitle" />
-                                        <HBox justifyContent="End" class="documentVersionActions">
-                                            <Button text="Open" type="Transparent" press=".onOpenVersion" />
-                                            <Button text="Download" type="Transparent" press=".onDownloadVersion" />
-                                        </HBox>
-                                    </VBox>
-                                </CustomListItem>
-                            </List>
+                                <List items="{document>/versions}" showSeparators="None" class="dashboardList">
+                                    <CustomListItem>
+                                        <VBox class="listGlassItem documentVersionItem">
+                                            <HBox justifyContent="SpaceBetween" alignItems="Center">
+                                                <Title text="Version {document>versionNumber}" class="listItemTitle" />
+                                                <Text text="{document>status}" class="documentVersionStatusText" />
+                                            </HBox>
+
+                                            <Text text="Created by: {document>createdBy}" class="listItemSubtitle" />
+
+                                            <Text
+                                                text="Approved by: {document>approvedBy}"
+                                                class="listItemSubtitle"
+                                                visible="{ path: 'document>approvedBy', formatter: '.formatApprovedByTextVisible' }" />
+
+                                            <Text
+                                                text="Rejected by: {document>rejectedBy}"
+                                                class="listItemSubtitle"
+                                                visible="{ path: 'document>rejectedBy', formatter: '.formatRejectedByTextVisible' }" />
+
+                                            <HBox justifyContent="End" wrap="Wrap" class="documentVersionActions">
+                                                <Button
+                                                    text="Approve"
+                                                    press=".onApproveVersionPress"
+                                                    class="documentApproveVersionButton"
+                                                    visible="{
+                                                        parts: [
+                                                            { path: 'document>/currentUserRole' },
+                                                            { path: 'document>status' }
+                                                        ],
+                                                        formatter: '.formatReviewerActionVisible'
+                                                    }" />
+
+                                                <Button
+                                                    text="Reject"
+                                                    press=".onRejectVersionPress"
+                                                    class="documentRejectVersionButton"
+                                                    visible="{
+                                                        parts: [
+                                                            { path: 'document>/currentUserRole' },
+                                                            { path: 'document>status' }
+                                                        ],
+                                                        formatter: '.formatReviewerActionVisible'
+                                                    }" />
+
+                                                <Button text="Open" type="Transparent" press=".onOpenVersion" />
+                                                <Button text="Download" type="Transparent" press=".onDownloadVersion" />
+                                            </HBox>
+                                        </VBox>
+                                    </CustomListItem>
+                                </List>
                         </VBox>
                     </VBox>
                 </HBox>

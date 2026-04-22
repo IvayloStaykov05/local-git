@@ -1,0 +1,73 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <Dialog
+        id="adminUserDetailsDialog"
+        title="User Details"
+        contentWidth="680px"
+        draggable="true"
+        resizable="false"
+        verticalScrolling="true"
+        horizontalScrolling="false"
+        class="adminUserDialog">
+
+        <content>
+            <VBox class="adminUserDialogContent">
+
+                <HBox class="adminUserTopRow" justifyContent="SpaceBetween" alignItems="Start">
+                    <VBox class="adminUserMainInfo">
+                        <Title
+                            text="{admin>/selectedUser/fullName}"
+                            class="adminUserName" />
+
+                        <Text
+                            text="{= 'Username: ' + ${admin>/selectedUser/username} }"
+                            class="adminUserMeta" />
+
+                        <Text
+                            text="{= 'Email: ' + ${admin>/selectedUser/email} }"
+                            class="adminUserMeta" />
+
+                        <Text
+                            text="{= 'Role: ' + ${admin>/selectedUser/systemRole} }"
+                            class="adminUserMeta" />
+                    </VBox>
+
+                    <VBox class="adminUserStatusBox" alignItems="End">
+                        <ObjectStatus
+                            text="{= ${admin>/selectedUser/active} ? 'Active' : 'Inactive' }"
+                            state="{= ${admin>/selectedUser/active} ? 'Success' : 'Error' }"
+                            class="adminUserStatusBadge" />
+                    </VBox>
+                </HBox>
+
+                <VBox class="adminUserSection">
+                    <Title
+                        text="Personal information"
+                        class="adminSectionTitle" />
+
+                    <VBox class="adminUserInfoBox">
+                        <Text
+                            text="{= ${admin>/selectedUser/myInfo} || 'No personal information added.' }"
+                            wrapping="true"
+                            class="adminUserInfoText" />
+                    </VBox>
+                </VBox>
+
+            </VBox>
+        </content>
+
+        <buttons>
+            <Button
+                text="{= ${admin>/selectedUser/active} ? 'Deactivate' : 'Activate' }"
+                press=".onToggleUserActive"
+                class="adminPrimaryDialogButton" />
+
+            <Button
+                text="Close"
+                press=".onCloseAdminUserDetailsDialog"
+                class="adminSecondaryDialogButton" />
+        </buttons>
+    </Dialog>
+</core:FragmentDefinition>
