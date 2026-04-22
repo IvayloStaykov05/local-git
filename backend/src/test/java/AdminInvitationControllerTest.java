@@ -1,10 +1,12 @@
 import com.example.project.backend.controller.admin.AdminInvitationController;
+import com.example.project.backend.dto.request.admin.AcceptAdminInvitationRequest;
 import com.example.project.backend.dto.request.admin.CreateAdminProfileRequest;
 import com.example.project.backend.dto.request.admin.InviteAdminRequest;
 import com.example.project.backend.dto.response.admin.AdminInvitationResponse;
 import com.example.project.backend.dto.response.admin.CreateAdminProfileResponse;
 import com.example.project.backend.dto.response.invite.ActionResponse;
 import com.example.project.backend.service.AdminInvitationService;
+import com.example.project.backend.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -63,23 +65,28 @@ class AdminInvitationControllerTest {
 
     @Test
     void shouldAcceptAdminInvitationSuccessfully() {
-        ActionResponse serviceResponse = new ActionResponse(
-                "Admin invitation accepted successfully"
+        AcceptAdminInvitationRequest request = new AcceptAdminInvitationRequest();
+        request.setAdminUsername("admin_ivan");
+        request.setAdminEmail("adminivan@example.com");
+        request.setAdminPassword("12345678");
+
+        CreateAdminProfileResponse serviceResponse = new CreateAdminProfileResponse(
+                10L,
+                5L,
+                "admin_ivan",
+                "adminivan@example.com",
+                "Admin invitation accepted and admin profile created successfully"
         );
 
         when(authentication.getName()).thenReturn("ivan123");
-        when(adminInvitationService.acceptAdminInvitation(100L, "ivan123")).thenReturn(serviceResponse);
+        when(adminInvitationService.acceptAdminInvitation(100L, "ivan123", request))
+                .thenReturn(serviceResponse);
 
-        ResponseEntity<ActionResponse> response =
-                adminInvitationController.acceptAdminInvitation(100L, authentication);
+        ResponseEntity<CreateAdminProfileResponse> response =
+                adminInvitationController.acceptAdminInvitation(100L, request, authentication);
 
-        assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("Admin invitation accepted successfully", response.getBody().getMessage());
-
-        verify(authentication).getName();
-        verify(adminInvitationService).acceptAdminInvitation(100L, "ivan123");
+        assertEquals("admin_ivan", response.getBody().getAdminUsername());
     }
 
     @Test
@@ -103,38 +110,4 @@ class AdminInvitationControllerTest {
         verify(adminInvitationService).rejectAdminInvitation(100L, "ivan123");
     }
 
-    @Test
-    void shouldCreateAdminProfileSuccessfully() {
-        CreateAdminProfileRequest request = new CreateAdminProfileRequest();
-        request.setInvitationId(100L);
-        request.setAdminUsername("ivan_admin");
-        request.setAdminEmail("ivan.admin@example.com");
-        request.setAdminPassword("secret123");
-
-        CreateAdminProfileResponse serviceResponse = new CreateAdminProfileResponse(
-                10L,
-                2L,
-                "ivan_admin",
-                "ivan.admin@example.com",
-                "Admin profile created successfully"
-        );
-
-        when(authentication.getName()).thenReturn("adminUser");
-        when(adminInvitationService.createAdminProfile("adminUser", request)).thenReturn(serviceResponse);
-
-        ResponseEntity<CreateAdminProfileResponse> response =
-                adminInvitationController.createAdminProfile(request, authentication);
-
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(10L, response.getBody().getAdminProfileId());
-        assertEquals(2L, response.getBody().getLinkedUserId());
-        assertEquals("ivan_admin", response.getBody().getAdminUsername());
-        assertEquals("ivan.admin@example.com", response.getBody().getAdminEmail());
-        assertEquals("Admin profile created successfully", response.getBody().getMessage());
-
-        verify(authentication).getName();
-        verify(adminInvitationService).createAdminProfile("adminUser", request);
-    }
 }

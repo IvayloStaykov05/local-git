@@ -1,5 +1,6 @@
 package com.example.project.backend.service;
 
+import com.example.project.backend.dto.request.admin.AcceptAdminInvitationRequest;
 import com.example.project.backend.dto.request.admin.CreateAdminProfileRequest;
 import com.example.project.backend.dto.request.admin.InviteAdminRequest;
 import com.example.project.backend.dto.response.admin.AdminInvitationResponse;
@@ -91,7 +92,11 @@ public class AdminInvitationService {
 
     }
     @Transactional
-    public ActionResponse acceptAdminInvitation(Long invitationId, String username) {
+    public CreateAdminProfileResponse acceptAdminInvitation(
+            Long invitationId,
+            String username,
+            AcceptAdminInvitationRequest request
+    ) {
         String errorMsg = "Cannot accept admin invitation -";
 
         User loggedUser = userRepository.findByUsername(username)
@@ -107,17 +112,42 @@ public class AdminInvitationService {
                 });
 
         if (!invitation.getRecipient().getId().equals(loggedUser.getId())) {
-            logger.error("{} logged user id {} does not match the recipient id {} of admin invitation with id {}", errorMsg, loggedUser.getId(), invitation.getRecipient().getId(), invitationId);
             throw new IllegalArgumentException("You cannot accept this admin invitation");
         }
 
         if (invitation.getStatus() != InvitationStatus.PENDING) {
-            logger.error("{} admin invitation with id {} is no longer pending", errorMsg, invitationId);
             throw new IllegalArgumentException("This admin invitation is no longer pending");
+        }
+
+        if (userRepository.existsByLinkedUserAndSystemRole(loggedUser, SystemRole.ADMIN)) {
+            throw new IllegalArgumentException("This user already has an admin profile");
+        }
+
+        if (userRepository.existsByUsername(request.getAdminUsername())) {
+            throw new IllegalArgumentException("Admin username already exists");
+        }
+
+        if (userRepository.existsByEmail(request.getAdminEmail())) {
+            throw new IllegalArgumentException("Admin email already exists");
         }
 
         invitation.setStatus(InvitationStatus.ACCEPTED);
         invitation.setProcessedAt(LocalDateTime.now());
+
+        User adminProfile = User.builder()
+                .username(request.getAdminUsername())
+                .firstName(loggedUser.getFirstName())
+                .lastName(loggedUser.getLastName())
+                .email(request.getAdminEmail())
+                .password(passwordEncoder.encode(request.getAdminPassword()))
+                .enabled(true)
+                .active(true)
+                .systemRole(SystemRole.ADMIN)
+                .linkedUser(loggedUser)
+                .myInfo(loggedUser.getMyInfo())
+                .build();
+
+        User savedAdminProfile = userRepository.save(adminProfile);
 
         notificationService.send(
                 invitation.getSender(),
@@ -126,9 +156,13 @@ public class AdminInvitationService {
                 NotificationType.ADMIN_ACCEPTED
         );
 
-        logger.info("User with id {} successfully accepted admin invitation with id {}", loggedUser.getId(), invitationId);
-
-        return new ActionResponse("Admin invitation accepted successfully");
+        return new CreateAdminProfileResponse(
+                savedAdminProfile.getId(),
+                loggedUser.getId(),
+                savedAdminProfile.getUsername(),
+                savedAdminProfile.getEmail(),
+                "Admin invitation accepted and admin profile created successfully"
+        );
     }
 
     @Transactional

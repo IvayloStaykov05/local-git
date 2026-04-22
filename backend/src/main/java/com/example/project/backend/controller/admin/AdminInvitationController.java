@@ -1,6 +1,6 @@
 package com.example.project.backend.controller.admin;
 
-import com.example.project.backend.dto.request.admin.CreateAdminProfileRequest;
+import com.example.project.backend.dto.request.admin.AcceptAdminInvitationRequest;
 import com.example.project.backend.dto.request.admin.InviteAdminRequest;
 import com.example.project.backend.dto.response.admin.AdminInvitationResponse;
 import com.example.project.backend.dto.response.admin.CreateAdminProfileResponse;
@@ -25,7 +25,7 @@ public class AdminInvitationController {
     public ResponseEntity<AdminInvitationResponse> inviteToBecomeAdmin(
             @RequestBody @Valid InviteAdminRequest request,
             Authentication authentication
-    ){
+    ) {
         return ResponseEntity.ok(
                 adminInvitationService.inviteToBecomeAdmin(authentication.getName(), request)
         );
@@ -33,13 +33,17 @@ public class AdminInvitationController {
 
     @PostMapping("/{invitationId}/accept")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ActionResponse> acceptAdminInvitation(
+    public ResponseEntity<CreateAdminProfileResponse> acceptAdminInvitation(
             @PathVariable Long invitationId,
+            @RequestBody @Valid AcceptAdminInvitationRequest request,
             Authentication authentication
-    ){
-
+    ) {
         return ResponseEntity.ok(
-                adminInvitationService.acceptAdminInvitation(invitationId, authentication.getName())
+                adminInvitationService.acceptAdminInvitation(
+                        invitationId,
+                        authentication.getName(),
+                        request
+                )
         );
     }
 
@@ -48,20 +52,9 @@ public class AdminInvitationController {
     public ResponseEntity<ActionResponse> rejectAdminInvitation(
             @PathVariable Long invitationId,
             Authentication authentication
-    ){
+    ) {
         return ResponseEntity.ok(
                 adminInvitationService.rejectAdminInvitation(invitationId, authentication.getName())
-        );
-    }
-
-    @PostMapping("/create-profile")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CreateAdminProfileResponse> createAdminProfile(
-            @RequestBody @Valid CreateAdminProfileRequest request,
-            Authentication authentication
-    ){
-        return ResponseEntity.ok(
-                adminInvitationService.createAdminProfile(authentication.getName(), request)
         );
     }
 }

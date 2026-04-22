@@ -2,7 +2,14 @@ package com.example.project.backend.service;
 
 import com.example.project.backend.dto.request.user.ForgotPasswordRequest;
 import com.example.project.backend.dto.request.user.UserRegisterRequest;
-import com.example.project.backend.dto.response.user.*;
+import com.example.project.backend.dto.response.admin.CreateAdminProfileResponse;
+import com.example.project.backend.dto.response.user.AddMyInfoResponse;
+import com.example.project.backend.dto.response.user.UpdateMyInfoResponse;
+import com.example.project.backend.dto.response.user.UserActivationResponse;
+import com.example.project.backend.dto.response.user.UserDeactivationResponse;
+import com.example.project.backend.dto.response.user.UserProfileResponse;
+import com.example.project.backend.dto.response.user.UserRegisterResponse;
+import com.example.project.backend.dto.response.user.UserSearchResponse;
 import com.example.project.backend.model.entity.User;
 import com.example.project.backend.model.enums.SystemRole;
 import com.example.project.backend.repository.UserRepository;
@@ -12,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 
 @Service
@@ -43,7 +49,7 @@ public class UserService {
 
     public String forgotPassword(ForgotPasswordRequest request) {
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            logger.error("Passwords no not match");
+            logger.error("Passwords do not match");
             throw new IllegalArgumentException("Passwords do not match");
         }
 
@@ -64,11 +70,12 @@ public class UserService {
 
     private void validateRegistration(UserRegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
-            logger.error("Unsuccessful registration - username {}already exists", request.getUsername());
+            logger.error("Unsuccessful registration - username {} already exists", request.getUsername());
             throw new IllegalArgumentException("Username already exists");
         }
+
         if (userRepository.existsByEmail(request.getEmail())) {
-            logger.error("Unsuccessful registration - email {}already exists", request.getEmail());
+            logger.error("Unsuccessful registration - email {} already exists", request.getEmail());
             throw new IllegalArgumentException("Email already exists");
         }
     }
@@ -102,7 +109,7 @@ public class UserService {
     public UserProfileResponse getUserProfile(Long userId, String loggedUsername) {
         userRepository.findByUsername(loggedUsername)
                 .orElseThrow(() -> {
-                    logger.error("Cannot get user profile - logged user  with username {} not found", loggedUsername);
+                    logger.error("Cannot get user profile - logged user with username {} not found", loggedUsername);
                     return new IllegalArgumentException("Logged user not found");
                 });
 
@@ -127,10 +134,10 @@ public class UserService {
     }
 
     @Transactional
-    public AddMyInfoResponse addMyInfo(String info, String username){
+    public AddMyInfoResponse addMyInfo(String info, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
-                    logger.error("User with username " + username + " not found");
+                    logger.error("User with username {} not found", username);
                     return new IllegalArgumentException("Logged user not found");
                 });
 
@@ -145,7 +152,8 @@ public class UserService {
         );
     }
 
-    public String getMyInfo(String username){
+    @Transactional(readOnly = true)
+    public String getMyInfo(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     logger.error("Cannot obtain personal information - user with username {} not found", username);
@@ -153,7 +161,7 @@ public class UserService {
                 });
 
         String info = user.getMyInfo();
-        if(info == null){
+        if (info == null) {
             logger.error("No personal information found for user with id {}", user.getId());
             throw new IllegalArgumentException("No personal information found");
         }
@@ -164,7 +172,7 @@ public class UserService {
     }
 
     @Transactional
-    public UpdateMyInfoResponse updateMyInfo(String info, String username){
+    public UpdateMyInfoResponse updateMyInfo(String info, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     logger.error("Cannot update personal information - user with username {} not found", username);
@@ -172,7 +180,7 @@ public class UserService {
                 });
 
         String currentInfo = user.getMyInfo();
-        if(currentInfo == null){
+        if (currentInfo == null) {
             logger.error("Unsuccessful updating of personal information of user with id {} - current personal information not found", user.getId());
             throw new IllegalArgumentException("You must add personal information before you update it");
         }
@@ -189,14 +197,14 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserSearchResponse> getAllUsers(String username){
+    public List<UserSearchResponse> getAllUsers(String username) {
         User loggedUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     logger.error("Unsuccessful retrieval of all users - user with username {} not found", username);
                     return new IllegalArgumentException("Logged user not found");
                 });
 
-        if(loggedUser.getSystemRole() != SystemRole.ADMIN){
+        if (loggedUser.getSystemRole() != SystemRole.ADMIN) {
             logger.error("Unsuccessful retrieval of all users - user with id {} is not an admin", loggedUser.getId());
             throw new IllegalArgumentException("You don't have access to this information");
         }
