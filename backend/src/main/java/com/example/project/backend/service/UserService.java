@@ -244,7 +244,8 @@ public class UserService {
                         user.getUsername(),
                         user.getFirstName(),
                         user.getLastName(),
-                        user.getEmail()
+                        user.getEmail(),
+                        user.isActive()
                 ))
                 .toList();
     }

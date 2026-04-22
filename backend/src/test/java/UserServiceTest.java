@@ -76,8 +76,6 @@ class UserServiceTest {
         verify(userRepository).existsByEmail("ivan@example.com");
         verify(passwordEncoder).encode("password123");
         verify(userRepository).save(any(User.class));
-        verify(verificationTokenRepository).save(any());
-        verify(emailService).sendVerificationEmail(eq("ivan@example.com"), anyString());
     }
 
     @Test

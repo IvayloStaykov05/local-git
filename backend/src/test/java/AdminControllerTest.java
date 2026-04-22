@@ -18,6 +18,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import com.example.project.backend.dto.response.admin.AdminDocumentTableResponse;
+import java.util.List;
+import com.example.project.backend.dto.response.admin.AdminDocumentTableResponse;
+import java.util.List;
+import java.time.LocalDateTime;
+
+
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -156,5 +163,38 @@ class AdminControllerTest {
 
         verify(authentication).getName();
         verify(documentService).deleteDocument(7L, "adminUser");
+    }
+
+    @Test
+    void shouldGetAdminDocumentsSuccessfully() {
+        AdminDocumentTableResponse tableResponse = mock(AdminDocumentTableResponse.class);
+
+        LocalDateTime createdAt = LocalDateTime.of(2026, 4, 20, 12, 0);
+
+        when(tableResponse.getId()).thenReturn(10L);
+        when(tableResponse.getTitle()).thenReturn("Project Plan");
+        when(tableResponse.getOwnerUsername()).thenReturn("ownerUser");
+        when(tableResponse.getVersionsCount()).thenReturn(2L);
+        when(tableResponse.getCreatedAt()).thenReturn(createdAt);
+
+        when(authentication.getName()).thenReturn("adminUser");
+        when(documentService.getAdminDocuments("adminUser", "Project"))
+                .thenReturn(List.of(tableResponse));
+
+        ResponseEntity<List<AdminDocumentTableResponse>> response =
+                adminDocumentController.getAdminDocuments("Project", authentication);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
+        assertEquals(10L, response.getBody().get(0).getId());
+        assertEquals("Project Plan", response.getBody().get(0).getTitle());
+        assertEquals("ownerUser", response.getBody().get(0).getOwnerUsername());
+        assertEquals(2L, response.getBody().get(0).getVersionsCount());
+        assertEquals(createdAt, response.getBody().get(0).getCreatedAt());
+
+        verify(authentication).getName();
+        verify(documentService).getAdminDocuments("adminUser", "Project");
     }
 }
