@@ -1,7 +1,10 @@
 import com.example.project.backend.dto.response.notification.NotificationResponse;
+import com.example.project.backend.model.entity.DocumentInvitation;
 import com.example.project.backend.model.entity.Notification;
 import com.example.project.backend.model.entity.User;
+import com.example.project.backend.model.enums.InvitationStatus;
 import com.example.project.backend.model.enums.NotificationType;
+import com.example.project.backend.repository.DocumentInvitationRepository;
 import com.example.project.backend.repository.NotificationRepository;
 import com.example.project.backend.repository.UserRepository;
 import com.example.project.backend.service.NotificationService;
@@ -27,6 +30,9 @@ class NotificationServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private DocumentInvitationRepository documentInvitationRepository;
 
     @InjectMocks
     private NotificationService notificationService;
@@ -73,6 +79,14 @@ class NotificationServiceTest {
         when(userRepository.findByUsername("maria")).thenReturn(Optional.of(user));
         when(notificationRepository.findByRecipientOrderByCreatedAtDesc(user))
                 .thenReturn(List.of(notification));
+
+        when(documentInvitationRepository
+                .findByRecipientAndSenderAndStatusOrderByCreatedAtDesc(
+                        user,
+                        sender,
+                        InvitationStatus.PENDING
+                ))
+                .thenReturn(List.of());
 
         List<NotificationResponse> response = notificationService.getNotifications("maria");
 
