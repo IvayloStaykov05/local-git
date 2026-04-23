@@ -1,12 +1,11 @@
 import com.example.project.backend.controller.admin.AdminInvitationController;
 import com.example.project.backend.dto.request.admin.AcceptAdminInvitationRequest;
-import com.example.project.backend.dto.request.admin.CreateAdminProfileRequest;
 import com.example.project.backend.dto.request.admin.InviteAdminRequest;
 import com.example.project.backend.dto.response.admin.AdminInvitationResponse;
 import com.example.project.backend.dto.response.admin.CreateAdminProfileResponse;
 import com.example.project.backend.dto.response.invite.ActionResponse;
+import com.example.project.backend.model.enums.SystemRole;
 import com.example.project.backend.service.AdminInvitationService;
-import com.example.project.backend.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,8 +15,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AdminInvitationControllerTest {
@@ -72,9 +73,11 @@ class AdminInvitationControllerTest {
 
         CreateAdminProfileResponse serviceResponse = new CreateAdminProfileResponse(
                 10L,
-                5L,
                 "admin_ivan",
+                "Ivan",
+                "Petrov",
                 "adminivan@example.com",
+                SystemRole.ADMIN,
                 "Admin invitation accepted and admin profile created successfully"
         );
 
@@ -86,7 +89,9 @@ class AdminInvitationControllerTest {
                 adminInvitationController.acceptAdminInvitation(100L, request, authentication);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
         assertEquals("admin_ivan", response.getBody().getAdminUsername());
+        assertEquals(SystemRole.ADMIN, response.getBody().getSystemRole());
     }
 
     @Test
@@ -109,5 +114,4 @@ class AdminInvitationControllerTest {
         verify(authentication).getName();
         verify(adminInvitationService).rejectAdminInvitation(100L, "ivan123");
     }
-
 }

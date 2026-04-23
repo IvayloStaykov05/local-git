@@ -64,7 +64,19 @@ sap.ui.define([
         },
 
         onBackToDashboard: function () {
-            this.getOwnerComponent().getRouter().navTo("RouteDashboard");
+            var oStoredUser = {};
+
+            try {
+                oStoredUser = JSON.parse(localStorage.getItem("user") || "{}");
+            } catch (e) {
+                oStoredUser = {};
+            }
+
+            if (oStoredUser.systemRole === "ADMIN") {
+                this.getOwnerComponent().getRouter().navTo("RouteAdminDashboard");
+            } else {
+                this.getOwnerComponent().getRouter().navTo("RouteDashboard");
+            }
         },
 
         _onRouteMatched: function (oEvent) {

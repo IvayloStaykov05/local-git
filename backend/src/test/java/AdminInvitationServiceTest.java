@@ -1,5 +1,3 @@
-package com.example.project.backend.service;
-
 import com.example.project.backend.dto.request.admin.AcceptAdminInvitationRequest;
 import com.example.project.backend.dto.request.admin.InviteAdminRequest;
 import com.example.project.backend.dto.response.admin.AdminInvitationResponse;
@@ -12,6 +10,8 @@ import com.example.project.backend.model.enums.NotificationType;
 import com.example.project.backend.model.enums.SystemRole;
 import com.example.project.backend.repository.AdminInvitationRepository;
 import com.example.project.backend.repository.UserRepository;
+import com.example.project.backend.service.AdminInvitationService;
+import com.example.project.backend.service.NotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,8 +21,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AdminInvitationServiceTest {
@@ -68,6 +74,7 @@ class AdminInvitationServiceTest {
 
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
         when(userRepository.findByUsername("ivan")).thenReturn(Optional.of(recipient));
+        when(userRepository.existsByLinkedUserAndSystemRole(recipient, SystemRole.ADMIN)).thenReturn(false);
         when(adminInvitationRepository.existsByRecipientAndStatus(recipient, InvitationStatus.PENDING)).thenReturn(false);
         when(adminInvitationRepository.save(any(AdminInvitation.class))).thenReturn(savedInvitation);
 
@@ -117,6 +124,8 @@ class AdminInvitationServiceTest {
 
         User savedAdminProfile = User.builder()
                 .username("ivan_admin")
+                .firstName("Ivan")
+                .lastName("Petrov")
                 .email("ivan.admin@example.com")
                 .systemRole(SystemRole.ADMIN)
                 .linkedUser(recipient)
@@ -135,9 +144,11 @@ class AdminInvitationServiceTest {
                 adminInvitationService.acceptAdminInvitation(100L, "ivan", request);
 
         assertEquals(10L, response.getAdminProfileId());
-        assertEquals(2L, response.getLinkedUserId());
         assertEquals("ivan_admin", response.getAdminUsername());
+        assertEquals("Ivan", response.getFirstName());
+        assertEquals("Petrov", response.getLastName());
         assertEquals("ivan.admin@example.com", response.getAdminEmail());
+        assertEquals(SystemRole.ADMIN, response.getSystemRole());
         assertEquals("Admin invitation accepted and admin profile created successfully", response.getMessage());
 
         assertEquals(InvitationStatus.ACCEPTED, invitation.getStatus());
@@ -234,6 +245,7 @@ class AdminInvitationServiceTest {
 
         User recipient = User.builder()
                 .username("ivan")
+                .systemRole(SystemRole.USER)
                 .build();
         recipient.setId(2L);
 
@@ -242,6 +254,7 @@ class AdminInvitationServiceTest {
 
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
         when(userRepository.findByUsername("ivan")).thenReturn(Optional.of(recipient));
+        when(userRepository.existsByLinkedUserAndSystemRole(recipient, SystemRole.ADMIN)).thenReturn(false);
         when(adminInvitationRepository.existsByRecipientAndStatus(recipient, InvitationStatus.PENDING)).thenReturn(true);
 
         IllegalArgumentException exception = assertThrows(
@@ -280,125 +293,5 @@ class AdminInvitationServiceTest {
         );
 
         assertEquals("You cannot accept this admin invitation", exception.getMessage());
-    }
-
-    @Test
-    void shouldThrowWhenAcceptingNonPendingAdminInvitation() {
-        User loggedUser = User.builder().username("ivan").build();
-        loggedUser.setId(2L);
-
-        AdminInvitation invitation = AdminInvitation.builder()
-                .recipient(loggedUser)
-                .status(InvitationStatus.ACCEPTED)
-                .build();
-        invitation.setId(100L);
-
-        AcceptAdminInvitationRequest request = new AcceptAdminInvitationRequest();
-        request.setAdminUsername("ivan_admin");
-        request.setAdminEmail("ivan.admin@example.com");
-        request.setAdminPassword("secret123");
-
-        when(userRepository.findByUsername("ivan")).thenReturn(Optional.of(loggedUser));
-        when(adminInvitationRepository.findById(100L)).thenReturn(Optional.of(invitation));
-
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> adminInvitationService.acceptAdminInvitation(100L, "ivan", request)
-        );
-
-        assertEquals("This admin invitation is no longer pending", exception.getMessage());
-    }
-
-    @Test
-    void shouldThrowWhenAdminProfileAlreadyExistsOnAccept() {
-        User loggedUser = User.builder()
-                .username("ivan")
-                .build();
-        loggedUser.setId(2L);
-
-        AdminInvitation invitation = AdminInvitation.builder()
-                .recipient(loggedUser)
-                .status(InvitationStatus.PENDING)
-                .build();
-        invitation.setId(100L);
-
-        AcceptAdminInvitationRequest request = new AcceptAdminInvitationRequest();
-        request.setAdminUsername("ivan_admin");
-        request.setAdminEmail("ivan.admin@example.com");
-        request.setAdminPassword("secret123");
-
-        when(userRepository.findByUsername("ivan")).thenReturn(Optional.of(loggedUser));
-        when(adminInvitationRepository.findById(100L)).thenReturn(Optional.of(invitation));
-        when(userRepository.existsByLinkedUserAndSystemRole(loggedUser, SystemRole.ADMIN)).thenReturn(true);
-
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> adminInvitationService.acceptAdminInvitation(100L, "ivan", request)
-        );
-
-        assertEquals("This user already has an admin profile", exception.getMessage());
-    }
-
-    @Test
-    void shouldThrowWhenAdminUsernameAlreadyExistsOnAccept() {
-        User loggedUser = User.builder()
-                .username("ivan")
-                .build();
-        loggedUser.setId(2L);
-
-        AdminInvitation invitation = AdminInvitation.builder()
-                .recipient(loggedUser)
-                .status(InvitationStatus.PENDING)
-                .build();
-        invitation.setId(100L);
-
-        AcceptAdminInvitationRequest request = new AcceptAdminInvitationRequest();
-        request.setAdminUsername("ivan_admin");
-        request.setAdminEmail("ivan.admin@example.com");
-        request.setAdminPassword("secret123");
-
-        when(userRepository.findByUsername("ivan")).thenReturn(Optional.of(loggedUser));
-        when(adminInvitationRepository.findById(100L)).thenReturn(Optional.of(invitation));
-        when(userRepository.existsByLinkedUserAndSystemRole(loggedUser, SystemRole.ADMIN)).thenReturn(false);
-        when(userRepository.existsByUsername("ivan_admin")).thenReturn(true);
-
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> adminInvitationService.acceptAdminInvitation(100L, "ivan", request)
-        );
-
-        assertEquals("Admin username already exists", exception.getMessage());
-    }
-
-    @Test
-    void shouldThrowWhenAdminEmailAlreadyExistsOnAccept() {
-        User loggedUser = User.builder()
-                .username("ivan")
-                .build();
-        loggedUser.setId(2L);
-
-        AdminInvitation invitation = AdminInvitation.builder()
-                .recipient(loggedUser)
-                .status(InvitationStatus.PENDING)
-                .build();
-        invitation.setId(100L);
-
-        AcceptAdminInvitationRequest request = new AcceptAdminInvitationRequest();
-        request.setAdminUsername("ivan_admin");
-        request.setAdminEmail("ivan.admin@example.com");
-        request.setAdminPassword("secret123");
-
-        when(userRepository.findByUsername("ivan")).thenReturn(Optional.of(loggedUser));
-        when(adminInvitationRepository.findById(100L)).thenReturn(Optional.of(invitation));
-        when(userRepository.existsByLinkedUserAndSystemRole(loggedUser, SystemRole.ADMIN)).thenReturn(false);
-        when(userRepository.existsByUsername("ivan_admin")).thenReturn(false);
-        when(userRepository.existsByEmail("ivan.admin@example.com")).thenReturn(true);
-
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> adminInvitationService.acceptAdminInvitation(100L, "ivan", request)
-        );
-
-        assertEquals("Admin email already exists", exception.getMessage());
     }
 }

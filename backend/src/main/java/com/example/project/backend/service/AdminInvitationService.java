@@ -1,7 +1,6 @@
 package com.example.project.backend.service;
 
 import com.example.project.backend.dto.request.admin.AcceptAdminInvitationRequest;
-import com.example.project.backend.dto.request.admin.CreateAdminProfileRequest;
 import com.example.project.backend.dto.request.admin.InviteAdminRequest;
 import com.example.project.backend.dto.response.admin.AdminInvitationResponse;
 import com.example.project.backend.dto.response.admin.CreateAdminProfileResponse;
@@ -13,12 +12,12 @@ import com.example.project.backend.model.enums.NotificationType;
 import com.example.project.backend.model.enums.SystemRole;
 import com.example.project.backend.repository.AdminInvitationRepository;
 import com.example.project.backend.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -30,11 +29,12 @@ public class AdminInvitationService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final PasswordEncoder passwordEncoder;
+
     private static final Logger logger = LoggerFactory.getLogger(AdminInvitationService.class);
 
     @Transactional
     public AdminInvitationResponse inviteToBecomeAdmin(String adminUsername, InviteAdminRequest request) {
-        String errorMsg = "Cannot invite to become admin -";
+        String errorMsg = "Cannot invite user to become admin -";
 
         User admin = userRepository.findByUsername(adminUsername)
                 .orElseThrow(() -> {
@@ -56,6 +56,16 @@ public class AdminInvitationService {
         if (admin.getId().equals(recipient.getId())) {
             logger.error("{} user with id {} tried to invite themself", errorMsg, admin.getId());
             throw new IllegalArgumentException("You cannot invite yourself.");
+        }
+
+        if (recipient.getSystemRole() == SystemRole.ADMIN) {
+            logger.error("{} user with id {} is already admin", errorMsg, recipient.getId());
+            throw new IllegalArgumentException("This user is already an admin.");
+        }
+
+        if (userRepository.existsByLinkedUserAndSystemRole(recipient, SystemRole.ADMIN)) {
+            logger.error("{} user with id {} already has linked admin profile", errorMsg, recipient.getId());
+            throw new IllegalArgumentException("This user already has an admin profile.");
         }
 
         if (adminInvitationRepository.existsByRecipientAndStatus(recipient, InvitationStatus.PENDING)) {
@@ -89,6 +99,7 @@ public class AdminInvitationService {
                 "Admin invitation sent successfully"
         );
     }
+
     @Transactional
     public CreateAdminProfileResponse acceptAdminInvitation(
             Long invitationId,
@@ -156,9 +167,11 @@ public class AdminInvitationService {
 
         return new CreateAdminProfileResponse(
                 savedAdminProfile.getId(),
-                loggedUser.getId(),
                 savedAdminProfile.getUsername(),
+                savedAdminProfile.getFirstName(),
+                savedAdminProfile.getLastName(),
                 savedAdminProfile.getEmail(),
+                savedAdminProfile.getSystemRole(),
                 "Admin invitation accepted and admin profile created successfully"
         );
     }
@@ -202,62 +215,5 @@ public class AdminInvitationService {
         logger.info("User with id {} successfully rejected admin invitation with id {}", loggedUser.getId(), invitationId);
 
         return new ActionResponse("Admin invitation rejected successfully");
-    }
-
-    @Transactional
-    public CreateAdminProfileResponse createAdminProfile(String adminUsername, CreateAdminProfileRequest request) {
-        String errorMsg = "Cannot create admin profile -";
-
-        User admin = userRepository.findByUsername(adminUsername)
-                .orElseThrow(() -> {
-                    logger.error("{} admin with username {} not found", errorMsg, adminUsername);
-                    return new IllegalArgumentException("Admin not found");
-                });
-
-        if (admin.getSystemRole() != SystemRole.ADMIN) {
-            logger.error("{} user with id {} is not an admin", errorMsg, admin.getId());
-            throw new IllegalArgumentException("Only admins can create admin profiles");
-        }
-
-        if (userRepository.existsByUsername(request.getAdminUsername())) {
-            logger.error("{} admin username {} already exists", errorMsg, request.getAdminUsername());
-            throw new IllegalArgumentException("Username already exists");
-        }
-
-        if (userRepository.existsByEmail(request.getAdminEmail())) {
-            logger.error("{} admin email {} already exists", errorMsg, request.getAdminEmail());
-            throw new IllegalArgumentException("Email already exists");
-        }
-
-        User adminProfile = User.builder()
-                .username(request.getAdminUsername())
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getAdminEmail())
-                .password(passwordEncoder.encode(request.getAdminPassword()))
-                .enabled(true)
-                .active(true)
-                .systemRole(SystemRole.ADMIN)
-                .linkedUser(null)
-                .build();
-
-        User savedAdminProfile = userRepository.save(adminProfile);
-
-        logger.info(
-                "Admin with id {} successfully created new admin profile with id {} and username {}",
-                admin.getId(),
-                savedAdminProfile.getId(),
-                savedAdminProfile.getUsername()
-        );
-
-        return new CreateAdminProfileResponse(
-                savedAdminProfile.getId(),
-                savedAdminProfile.getUsername(),
-                savedAdminProfile.getFirstName(),
-                savedAdminProfile.getLastName(),
-                savedAdminProfile.getEmail(),
-                savedAdminProfile.getSystemRole(),
-                "Admin profile created successfully"
-        );
     }
 }

@@ -28,7 +28,7 @@
 
                     <HBox class="dashboardActionsWrapper" alignItems="Center" justifyContent="End">
                         <Button
-                            text="Create Admin"
+                            text="Invite Admin"
                             press="onOpenCreateAdminDialog"
                             class="dashboardCreateAdminButton" />
 
@@ -90,10 +90,10 @@
                                             class="adminDeleteButton" />
 
                                         <Button
-                                            text="View"
+                                            text="Open"
                                             type="Transparent"
                                             press="onOpenDocument"
-                                            class="adminViewButton" />
+                                            class="adminOpenButton" />
                                     </cells>
                                 </ColumnListItem>
                             </items>

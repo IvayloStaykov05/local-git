@@ -218,40 +218,84 @@ sap.ui.define([
             }
 
             if (!oResponse.ok) {
-                throw new Error(sText || "Version history loading failed");
+                throw new Error(sText || "Cannot load versions");
             }
 
-            var aVersions = sText ? JSON.parse(sText) : [];
+            var aHistory = sText ? JSON.parse(sText) : [];
+            return Array.isArray(aHistory) ? aHistory : [];
+        },
 
-            return (Array.isArray(aVersions) ? aVersions : []).map(function (oVersion) {
-                return {
-                    versionId: oVersion.versionId,
-                    versionNumber: oVersion.versionNumber,
-                    status: oVersion.status || "",
-                    createdBy: oVersion.createdBy || "",
-                    approvedBy: oVersion.approvedBy || "",
-                    rejectedBy: oVersion.rejectedBy || "",
-                    createdAt: oVersion.createdAt || null
-                };
-            });
+        onCloseDeleteDocumentDialog: function () {
+            var oDialog = this.byId("adminDeleteDocumentDialog");
+            if (oDialog) {
+                oDialog.close();
+            }
+        },
+
+        onDeleteSingleVersion: async function (oEvent) {
+            var oContext = oEvent.getSource().getBindingContext("admin");
+            if (!oContext) {
+                return;
+            }
+
+            var oVersion = oContext.getObject();
+            var oDeleteDialogData = this.getView().getModel("admin").getProperty("/deleteDialog") || {};
+            var iDocumentId = oDeleteDialogData.documentId;
+            var sDocumentTitle = oDeleteDialogData.title || "this document";
+
+            try {
+                const oResponse = await fetch("http://localhost:8080/api/admin/documentVersions/" + oVersion.id, {
+                    method: "DELETE",
+                    headers: this._getAuthHeaders()
+                });
+
+                const sText = await oResponse.text();
+
+                if (oResponse.status === 401 || oResponse.status === 403) {
+                    this._handleUnauthorized();
+                    return;
+                }
+
+                if (!oResponse.ok) {
+                    throw new Error(sText || "Cannot delete version");
+                }
+
+                MessageToast.show("Version deleted successfully");
+
+                var aVersions = await this._loadDocumentVersionsForDelete(iDocumentId);
+                var iVersionsCount = aVersions.length;
+
+                if (iVersionsCount <= 1) {
+                    this.onCloseDeleteDocumentDialog();
+                    this._confirmDeleteWholeDocument(iDocumentId, sDocumentTitle);
+                    return;
+                }
+
+                this.getView().getModel("admin").setProperty("/deleteDialog", {
+                    documentId: iDocumentId,
+                    title: sDocumentTitle,
+                    versionsCount: iVersionsCount,
+                    versions: aVersions
+                });
+
+                this._loadAdminData(this.getView().getModel("admin").getProperty("/search"));
+            } catch (oError) {
+                MessageBox.error("Cannot delete version: " + oError.message);
+            }
         },
 
         _confirmDeleteWholeDocument: function (iDocumentId, sTitle) {
-            var that = this;
-
             MessageBox.confirm(
-                "Are you sure you want to delete document \"" + (sTitle || "") + "\"?",
+                "Are you sure you want to delete the whole document \"" + (sTitle || "") + "\"?",
                 {
-                    title: "Delete document",
+                    title: "Delete Document",
                     actions: [MessageBox.Action.DELETE, MessageBox.Action.CANCEL],
                     emphasizedAction: MessageBox.Action.DELETE,
-                    onClose: async function (sAction) {
-                        if (sAction !== MessageBox.Action.DELETE) {
-                            return;
+                    onClose: function (sAction) {
+                        if (sAction === MessageBox.Action.DELETE) {
+                            this._deleteWholeDocument(iDocumentId);
                         }
-
-                        await that._deleteWholeDocument(iDocumentId);
-                    }
+                    }.bind(this)
                 }
             );
         },
@@ -271,137 +315,15 @@ sap.ui.define([
                 }
 
                 if (!oResponse.ok) {
-                    throw new Error(sText || "Document deletion failed");
+                    throw new Error(sText || "Cannot delete document");
                 }
 
                 MessageToast.show("Document deleted successfully");
-
-                this._removeDocumentFromTable(iDocumentId);
                 this.onCloseDeleteDocumentDialog();
+                this._loadAdminData(this.getView().getModel("admin").getProperty("/search"));
             } catch (oError) {
                 MessageBox.error("Cannot delete document: " + oError.message);
             }
-        },
-
-        _removeDocumentFromTable: function (iDocumentId) {
-            var oModel = this.getView().getModel("admin");
-            var aDocuments = oModel.getProperty("/documents") || [];
-
-            aDocuments = aDocuments.filter(function (oDocument) {
-                return oDocument.id !== iDocumentId;
-            });
-
-            oModel.setProperty("/documents", aDocuments);
-        },
-
-        _updateDocumentVersionsCount: function (iDocumentId, iNewCount) {
-            var oModel = this.getView().getModel("admin");
-            var aDocuments = oModel.getProperty("/documents") || [];
-
-            aDocuments = aDocuments.map(function (oDocument) {
-                if (oDocument.id === iDocumentId) {
-                    return Object.assign({}, oDocument, {
-                        versionsCount: iNewCount
-                    });
-                }
-                return oDocument;
-            });
-
-            oModel.setProperty("/documents", aDocuments);
-        },
-
-        onDeleteVersionPress: function (oEvent) {
-            var oContext = oEvent.getSource().getBindingContext("admin");
-            if (!oContext) {
-                return;
-            }
-
-            var oVersion = oContext.getObject();
-            var oDeleteDialogData = this.getView().getModel("admin").getProperty("/deleteDialog");
-            var that = this;
-
-            MessageBox.confirm(
-                "Are you sure you want to delete version " + oVersion.versionNumber + " of document \"" + (oDeleteDialogData.title || "") + "\"?",
-                {
-                    title: "Delete version",
-                    actions: [MessageBox.Action.DELETE, MessageBox.Action.CANCEL],
-                    emphasizedAction: MessageBox.Action.DELETE,
-                    onClose: async function (sAction) {
-                        if (sAction !== MessageBox.Action.DELETE) {
-                            return;
-                        }
-
-                        await that._deleteVersion(oVersion.versionId);
-                    }
-                }
-            );
-        },
-
-        _deleteVersion: async function (iVersionId) {
-            var oModel = this.getView().getModel("admin");
-            var oDeleteDialogData = oModel.getProperty("/deleteDialog");
-            var iDocumentId = oDeleteDialogData.documentId;
-
-            try {
-                const oResponse = await fetch("http://localhost:8080/api/admin/documentVersions/" + iVersionId, {
-                    method: "DELETE",
-                    headers: this._getAuthHeaders()
-                });
-
-                const sText = await oResponse.text();
-
-                if (oResponse.status === 401 || oResponse.status === 403) {
-                    this._handleUnauthorized();
-                    return;
-                }
-
-                if (!oResponse.ok) {
-                    throw new Error(sText || "Version deletion failed");
-                }
-
-                var aVersions = oDeleteDialogData.versions || [];
-                aVersions = aVersions.filter(function (oVersion) {
-                    return oVersion.versionId !== iVersionId;
-                });
-
-                var iNewCount = aVersions.length;
-
-                oModel.setProperty("/deleteDialog/versions", aVersions);
-                oModel.setProperty("/deleteDialog/versionsCount", iNewCount);
-
-                this._updateDocumentVersionsCount(iDocumentId, iNewCount);
-
-                MessageToast.show("Version deleted successfully");
-            } catch (oError) {
-                MessageBox.error("Cannot delete version: " + oError.message);
-            }
-        },
-
-        onDeleteWholeDocumentFromDialog: function () {
-            var oDeleteDialogData = this.getView().getModel("admin").getProperty("/deleteDialog");
-
-            if (!oDeleteDialogData || !oDeleteDialogData.documentId) {
-                return;
-            }
-
-            this._confirmDeleteWholeDocument(
-                oDeleteDialogData.documentId,
-                oDeleteDialogData.title
-            );
-        },
-
-        onCloseDeleteDocumentDialog: function () {
-            var oDialog = this.byId("adminDeleteDocumentDialog");
-            if (oDialog) {
-                oDialog.close();
-            }
-
-            this.getView().getModel("admin").setProperty("/deleteDialog", {
-                documentId: null,
-                title: "",
-                versionsCount: 0,
-                versions: []
-            });
         },
 
         onOpenUserDetails: async function (oEvent) {
@@ -411,31 +333,13 @@ sap.ui.define([
             }
 
             var oUser = oContext.getObject();
+            var oModel = this.getView().getModel("admin");
+
+            oModel.setProperty("/selectedUser", Object.assign({}, oUser));
 
             try {
-                const oResponse = await fetch("http://localhost:8080/api/users/" + oUser.id, {
-                    method: "GET",
-                    headers: this._getAuthHeaders()
-                });
-
-                const sText = await oResponse.text();
-
-                if (oResponse.status === 401 || oResponse.status === 403) {
-                    this._handleUnauthorized();
-                    return;
-                }
-
-                if (!oResponse.ok) {
-                    throw new Error(sText || "Cannot load user profile");
-                }
-
-                var oProfile = sText ? JSON.parse(sText) : {};
-                var oMappedUser = this._mapUser(oProfile);
-
-                this.getView().getModel("admin").setProperty("/selectedUser", oMappedUser);
-
-                if (!this._pAdminUserDialog) {
-                    this._pAdminUserDialog = Fragment.load({
+                if (!this._pAdminUserDetailsDialog) {
+                    this._pAdminUserDetailsDialog = Fragment.load({
                         id: this.getView().getId(),
                         name: "com.example.project.frontend.frontend.view.fragments.AdminUserDetailsDialog",
                         controller: this
@@ -445,10 +349,10 @@ sap.ui.define([
                     }.bind(this));
                 }
 
-                var oDialog = await this._pAdminUserDialog;
+                var oDialog = await this._pAdminUserDetailsDialog;
                 oDialog.open();
             } catch (oError) {
-                MessageBox.error("Cannot load user details: " + oError.message);
+                MessageBox.error("Cannot open user details: " + oError.message);
             }
         },
 
@@ -459,32 +363,25 @@ sap.ui.define([
             }
         },
 
-        onToggleUserActive: async function () {
+        onToggleUserActiveStatus: async function () {
             var oModel = this.getView().getModel("admin");
             var oSelectedUser = oModel.getProperty("/selectedUser");
-            var oCurrentUser = oModel.getProperty("/currentUser");
 
             if (!oSelectedUser || !oSelectedUser.id) {
                 return;
             }
 
-            if (oCurrentUser && oCurrentUser.id === oSelectedUser.id) {
-                MessageBox.warning("You cannot deactivate your own admin account.");
-                return;
-            }
-
-            var bWillDeactivate = !!oSelectedUser.active;
-            var sUrl = bWillDeactivate
+            var bCurrentlyActive = !!oSelectedUser.active;
+            var sUrl = bCurrentlyActive
                 ? "http://localhost:8080/api/admin/users/deactivate"
                 : "http://localhost:8080/api/admin/users/activate";
 
             try {
                 const oResponse = await fetch(sUrl, {
-                    method: "PATCH",
+                    method: "PUT",
                     headers: this._getAuthHeaders(),
                     body: JSON.stringify({
-                        userId: oSelectedUser.id,
-                        reason: "Status changed by admin from admin dashboard."
+                        userId: oSelectedUser.id
                     })
                 });
 
@@ -496,7 +393,7 @@ sap.ui.define([
                 }
 
                 if (!oResponse.ok) {
-                    throw new Error(sText || "User status update failed");
+                    throw new Error(sText || "Cannot change user status");
                 }
 
                 var oResult = sText ? JSON.parse(sText) : {};
@@ -539,7 +436,7 @@ sap.ui.define([
                 this._clearCreateAdminForm();
                 oDialog.open();
             } catch (oError) {
-                MessageBox.error("Cannot open create admin dialog: " + oError.message);
+                MessageBox.error("Cannot open admin invitation dialog: " + oError.message);
             }
         },
 
@@ -556,12 +453,7 @@ sap.ui.define([
 
         _clearCreateAdminForm: function () {
             var aFieldIds = [
-                "createAdminUsernameInput",
-                "createAdminFirstNameInput",
-                "createAdminLastNameInput",
-                "createAdminEmailInput",
-                "createAdminPasswordInput",
-                "createAdminConfirmPasswordInput"
+                "createAdminUsernameInput"
             ];
 
             aFieldIds.forEach(function (sFieldId) {
@@ -580,44 +472,24 @@ sap.ui.define([
 
         onSubmitCreateAdmin: async function () {
             var oUsernameInput = this._getCreateAdminField("createAdminUsernameInput");
-            var oFirstNameInput = this._getCreateAdminField("createAdminFirstNameInput");
-            var oLastNameInput = this._getCreateAdminField("createAdminLastNameInput");
-            var oEmailInput = this._getCreateAdminField("createAdminEmailInput");
-            var oPasswordInput = this._getCreateAdminField("createAdminPasswordInput");
-            var oConfirmPasswordInput = this._getCreateAdminField("createAdminConfirmPasswordInput");
-
             var sUsername = oUsernameInput.getValue().trim();
-            var sFirstName = oFirstNameInput.getValue().trim();
-            var sLastName = oLastNameInput.getValue().trim();
-            var sEmail = oEmailInput.getValue().trim();
-            var sPassword = oPasswordInput.getValue();
-            var sConfirmPassword = oConfirmPasswordInput.getValue();
 
-            if (!sUsername || !sFirstName || !sLastName || !sEmail || !sPassword || !sConfirmPassword) {
-                MessageBox.error("Please fill all fields.");
+            if (!sUsername) {
+                oUsernameInput.setValueState("Error");
+                oUsernameInput.setValueStateText("Username is required");
+                MessageBox.error("Please enter the username of the user you want to invite.");
                 return;
             }
 
-            if (sPassword !== sConfirmPassword) {
-                oConfirmPasswordInput.setValueState("Error");
-                oConfirmPasswordInput.setValueStateText("Passwords do not match");
-                MessageBox.error("Passwords do not match.");
-                return;
-            }
-
-            oConfirmPasswordInput.setValueState("None");
-            oConfirmPasswordInput.setValueStateText("");
+            oUsernameInput.setValueState("None");
+            oUsernameInput.setValueStateText("");
 
             try {
-                const oResponse = await fetch("http://localhost:8080/api/admin-invitations/create-profile", {
+                const oResponse = await fetch("http://localhost:8080/api/admin-invitations", {
                     method: "POST",
                     headers: this._getAuthHeaders(),
                     body: JSON.stringify({
-                        adminUsername: sUsername,
-                        firstName: sFirstName,
-                        lastName: sLastName,
-                        adminEmail: sEmail,
-                        adminPassword: sPassword
+                        username: sUsername
                     })
                 });
 
@@ -629,17 +501,17 @@ sap.ui.define([
                 }
 
                 if (!oResponse.ok) {
-                    throw new Error(sText || "Admin creation failed");
+                    throw new Error(sText || "Admin invitation failed");
                 }
 
                 var oResult = sText ? JSON.parse(sText) : {};
-                MessageToast.show(oResult.message || "Admin created successfully");
+                MessageToast.show(oResult.message || "Admin invitation sent successfully");
 
                 this.onCloseCreateAdminDialog();
                 this._clearCreateAdminForm();
                 this._loadAdminData(this.getView().getModel("admin").getProperty("/search"));
             } catch (oError) {
-                MessageBox.error("Cannot create admin: " + oError.message);
+                MessageBox.error("Cannot send admin invitation: " + oError.message);
             }
         },
 
