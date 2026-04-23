@@ -14,4 +14,6 @@ public interface DocumentInvitationRepository extends JpaRepository<DocumentInvi
     List<DocumentInvitation> findByRecipientAndStatus(User user, InvitationStatus status);
 
     boolean existsByDocumentAndRecipientAndStatus(Document document, User recipient, InvitationStatus invitationStatus);
+
+    List<DocumentInvitation> findByRecipientAndSenderAndStatusOrderByCreatedAtDesc(User recipient, User sender, InvitationStatus status);
 }

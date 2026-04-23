@@ -14,4 +14,9 @@ public class NotificationResponse {
     private boolean isRead;
     private String sender;
     private LocalDateTime createdAt;
+    private boolean actionable;
+    private Long invitationId;
+    private Long documentId;
+    private String documentTitle;
+    private String role;
 }

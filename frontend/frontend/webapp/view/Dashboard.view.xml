@@ -246,7 +246,12 @@
                         <VBox class="glassCard notificationsCard">
                             <HBox justifyContent="SpaceBetween" alignItems="Center">
                                 <Title text="{i18n>notifications}" class="sectionMainTitle" />
-                                <Text text="•••" class="dotsText" />
+                                <Button
+                                    text="Mark all as read"
+                                    type="Transparent"
+                                    press="onMarkAllNotificationsRead"
+                                    class="notificationMarkAllButton"
+                                    visible="{= ${dashboard>/notifications}.length > 0 }" />
                             </HBox>
 
                             <ScrollContainer
@@ -262,13 +267,41 @@
                                         showSeparators="None"
                                         visible="{= ${dashboard>/notifications}.length > 0 }">
                                         <CustomListItem>
-                                            <HBox class="notificationRow" alignItems="Start">
-                                                <Text text="🔔" class="notificationRowIcon" />
-                                                <VBox class="notificationRowTextBox">
-                                                    <Text text="{dashboard>title}" class="notificationRowTitle" />
-                                                    <Text text="{dashboard>message}" class="notificationRowMessage" />
-                                                </VBox>
-                                            </HBox>
+                                            <VBox class="notificationRow">
+                                                <HBox justifyContent="SpaceBetween" alignItems="Start" class="notificationTopRow">
+                                                    <HBox alignItems="Start" class="notificationRowMainInfo">
+                                                        <Text text="{dashboard>icon}" class="notificationRowIcon" />
+                                                        <VBox class="notificationRowTextBox">
+                                                            <Title text="{dashboard>title}" level="H6" class="notificationRowTitle" />
+                                                            <Text text="{dashboard>message}" class="notificationRowMessage" wrapping="true" />
+
+                                                            <HBox class="notificationMetaRow" wrap="Wrap" alignItems="Center">
+                                                                <ObjectStatus
+                                                                    text="{ path: 'dashboard>isRead', formatter: '.formatNotificationReadText' }"
+                                                                    state="{ path: 'dashboard>isRead', formatter: '.formatNotificationReadState' }"
+                                                                    class="notificationStatus" />
+                                                                <Text text="{dashboard>sender}" class="notificationMetaText notificationSenderText" />
+                                                                <Text text="•" class="notificationMetaDot" />
+                                                                <Text text="{ path: 'dashboard>createdAt', formatter: '.formatNotificationDate' }" class="notificationMetaText" />
+                                                            </HBox>
+                                                        </VBox>
+                                                    </HBox>
+                                                </HBox>
+
+                                                <HBox
+                                                    class="notificationActionsRow"
+                                                    visible="{ path: 'dashboard>actionable', formatter: '.formatNotificationActionsVisible' }">
+                                                    <Button
+                                                        text="{dashboard>acceptText}"
+                                                        press="onNotificationAccept"
+                                                        class="notificationAcceptButton" />
+                                                    <Button
+                                                        text="{dashboard>rejectText}"
+                                                        type="Transparent"
+                                                        press="onNotificationReject"
+                                                        class="notificationRejectButton" />
+                                                </HBox>
+                                            </VBox>
                                         </CustomListItem>
                                     </List>
 

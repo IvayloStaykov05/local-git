@@ -3,8 +3,13 @@ sap.ui.define([
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageToast",
     "sap/m/MessageBox",
-    "sap/ui/core/Fragment"
-], function (Controller, JSONModel, MessageToast, MessageBox, Fragment) {
+    "sap/ui/core/Fragment",
+    "sap/m/Dialog",
+    "sap/m/Button",
+    "sap/m/Input",
+    "sap/m/VBox",
+    "sap/m/Text"
+], function (Controller, JSONModel, MessageToast, MessageBox, Fragment, Dialog, Button, Input, VBox, Text) {
     "use strict";
 
     return Controller.extend("com.example.project.frontend.frontend.controller.Dashboard", {
@@ -58,6 +63,13 @@ sap.ui.define([
             });
 
             this.getView().setModel(oDashboardModel, "dashboard");
+            this.getOwnerComponent().getRouter().getRoute("RouteDashboard")
+                .attachPatternMatched(this._onRouteMatched, this);
+            this._loadOwnProfile();
+            this._loadDashboardData();
+        },
+
+        _onRouteMatched: function () {
             this._loadOwnProfile();
             this._loadDashboardData();
         },
@@ -98,6 +110,92 @@ sap.ui.define([
                     sUsername.substring(0, 2)
                 ).toUpperCase()
             };
+        },
+
+        _mapNotification: function (oNotification) {
+            var sType = oNotification.type || "";
+            var sSender = oNotification.sender || "";
+            var sDocumentTitle = oNotification.documentTitle || "";
+            var sRole = oNotification.role || "";
+
+            return {
+                id: oNotification.id,
+                message: oNotification.message || "",
+                type: sType,
+                isRead: !!oNotification.read,
+                sender: sSender,
+                createdAt: oNotification.createdAt || null,
+                actionable: !!oNotification.actionable,
+                invitationId: oNotification.invitationId || null,
+                documentId: oNotification.documentId || null,
+                documentTitle: sDocumentTitle,
+                role: sRole,
+                title: this._buildNotificationTitle(sType, sSender, sDocumentTitle, sRole),
+                icon: this._buildNotificationIcon(sType),
+                acceptText: sType === "ADMIN_REQUEST" ? "Create admin" : "Accept",
+                rejectText: "Reject"
+            };
+        },
+
+        _buildNotificationTitle: function (sType, sSender, sDocumentTitle, sRole) {
+            if (sType === "ROLE_REQUEST") {
+                return "Project invitation" + (sDocumentTitle ? ": " + sDocumentTitle : "");
+            }
+
+            if (sType === "ADMIN_REQUEST") {
+                return "Admin invitation from " + sSender;
+            }
+
+            if (sType === "ROLE_ACCEPTED") {
+                return sSender + " accepted your invitation";
+            }
+
+            if (sType === "ROLE_REJECTED") {
+                return sSender + " rejected your invitation";
+            }
+
+            if (sType === "ADMIN_ACCEPTED") {
+                return sSender + " accepted admin invitation";
+            }
+
+            if (sType === "ADMIN_REJECTED") {
+                return sSender + " rejected admin invitation";
+            }
+
+            if (sType === "VERSION_CREATED") {
+                return "New version created";
+            }
+
+            if (sType === "VERSION_APPROVED") {
+                return "Version approved";
+            }
+
+            if (sType === "VERSION_REJECTED") {
+                return "Version rejected";
+            }
+
+            return (sSender ? sSender + ": " : "") + (sRole || "Notification");
+        },
+
+        _buildNotificationIcon: function (sType) {
+            switch (sType) {
+            case "ROLE_REQUEST":
+                return "👥";
+            case "ADMIN_REQUEST":
+                return "⭐";
+            case "ROLE_ACCEPTED":
+            case "ADMIN_ACCEPTED":
+            case "VERSION_APPROVED":
+                return "✅";
+            case "ROLE_REJECTED":
+            case "ADMIN_REJECTED":
+            case "VERSION_REJECTED":
+                return "❌";
+            case "VERSION_CREATED":
+                return "📄";
+            default:
+                return "🔔";
+            }
         },
 
         _loadOwnProfile: async function () {
@@ -149,7 +247,7 @@ sap.ui.define([
 
         _loadDashboardData: async function () {
             try {
-                const [oDocumentsResponse, oSharedUsersResponse] = await Promise.all([
+                const [oDocumentsResponse, oSharedUsersResponse, oNotificationsResponse] = await Promise.all([
                     fetch("http://localhost:8080/api/documents/my", {
                         method: "GET",
                         headers: this._getAuthHeaders()
@@ -157,12 +255,17 @@ sap.ui.define([
                     fetch("http://localhost:8080/api/documentMembers/shared-users", {
                         method: "GET",
                         headers: this._getAuthHeaders()
+                    }),
+                    fetch("http://localhost:8080/api/notifications", {
+                        method: "GET",
+                        headers: this._getAuthHeaders()
                     })
                 ]);
 
                 if (
                     oDocumentsResponse.status === 401 || oDocumentsResponse.status === 403 ||
-                    oSharedUsersResponse.status === 401 || oSharedUsersResponse.status === 403
+                    oSharedUsersResponse.status === 401 || oSharedUsersResponse.status === 403 ||
+                    oNotificationsResponse.status === 401 || oNotificationsResponse.status === 403
                 ) {
                     this._handleUnauthorized();
                     return;
@@ -170,6 +273,7 @@ sap.ui.define([
 
                 const sDocumentsText = await oDocumentsResponse.text();
                 const sSharedUsersText = await oSharedUsersResponse.text();
+                const sNotificationsText = await oNotificationsResponse.text();
 
                 if (!oDocumentsResponse.ok) {
                     throw new Error(sDocumentsText || "Documents loading failed");
@@ -179,13 +283,20 @@ sap.ui.define([
                     throw new Error(sSharedUsersText || "Shared users loading failed");
                 }
 
+                if (!oNotificationsResponse.ok) {
+                    throw new Error(sNotificationsText || "Notifications loading failed");
+                }
+
                 var aDocuments = sDocumentsText ? JSON.parse(sDocumentsText) : [];
                 var aSharedUsers = sSharedUsersText ? JSON.parse(sSharedUsersText) : [];
+                var aNotifications = sNotificationsText ? JSON.parse(sNotificationsText) : [];
 
                 var aMappedUsers = (Array.isArray(aSharedUsers) ? aSharedUsers : []).map(this._mapUser);
+                var aMappedNotifications = (Array.isArray(aNotifications) ? aNotifications : []).map(this._mapNotification.bind(this));
 
                 this.getView().getModel("dashboard").setProperty("/myDocuments", Array.isArray(aDocuments) ? aDocuments : []);
                 this.getView().getModel("dashboard").setProperty("/peopleWithWork", aMappedUsers);
+                this.getView().getModel("dashboard").setProperty("/notifications", aMappedNotifications);
 
             } catch (oError) {
                 MessageBox.error("Cannot load dashboard data: " + oError.message);
@@ -394,6 +505,268 @@ sap.ui.define([
             } catch (oError) {
                 MessageBox.error("Cannot save personal information: " + oError.message);
             }
+        },
+
+        onNotificationAccept: function (oEvent) {
+            var oContext = oEvent.getSource().getBindingContext("dashboard");
+            if (!oContext) {
+                return;
+            }
+
+            var oNotification = oContext.getObject();
+
+            if (!oNotification.actionable || !oNotification.invitationId) {
+                MessageBox.warning("This notification is no longer actionable.");
+                return;
+            }
+
+            if (oNotification.type === "ROLE_REQUEST") {
+                this._acceptDocumentInvitation(oNotification);
+                return;
+            }
+
+            if (oNotification.type === "ADMIN_REQUEST") {
+                this._openAdminAcceptDialog(oNotification);
+            }
+        },
+
+        onNotificationReject: function (oEvent) {
+            var oContext = oEvent.getSource().getBindingContext("dashboard");
+            if (!oContext) {
+                return;
+            }
+
+            var oNotification = oContext.getObject();
+
+            if (!oNotification.actionable || !oNotification.invitationId) {
+                MessageBox.warning("This notification is no longer actionable.");
+                return;
+            }
+
+            if (oNotification.type === "ROLE_REQUEST") {
+                this._rejectDocumentInvitation(oNotification);
+                return;
+            }
+
+            if (oNotification.type === "ADMIN_REQUEST") {
+                this._rejectAdminInvitation(oNotification);
+            }
+        },
+
+        _acceptDocumentInvitation: async function (oNotification) {
+            try {
+                var oResponse = await fetch("http://localhost:8080/api/invitations/" + oNotification.invitationId + "/accept", {
+                    method: "POST",
+                    headers: this._getAuthHeaders()
+                });
+
+                var sText = await oResponse.text();
+                if (!oResponse.ok) {
+                    throw new Error(sText || "Cannot accept invitation");
+                }
+
+                await this._markNotificationAsRead(oNotification.id);
+                MessageToast.show("Invitation accepted successfully.");
+                await this._loadDashboardData();
+            } catch (oError) {
+                MessageBox.error("Cannot accept invitation: " + oError.message);
+            }
+        },
+
+        _rejectDocumentInvitation: async function (oNotification) {
+            try {
+                var oResponse = await fetch("http://localhost:8080/api/invitations/" + oNotification.invitationId + "/reject", {
+                    method: "POST",
+                    headers: this._getAuthHeaders()
+                });
+
+                var sText = await oResponse.text();
+                if (!oResponse.ok) {
+                    throw new Error(sText || "Cannot reject invitation");
+                }
+
+                await this._markNotificationAsRead(oNotification.id);
+                MessageToast.show("Invitation rejected successfully.");
+                await this._loadDashboardData();
+            } catch (oError) {
+                MessageBox.error("Cannot reject invitation: " + oError.message);
+            }
+        },
+
+        _openAdminAcceptDialog: function (oNotification) {
+            var oUsernameInput = new Input({
+                width: "100%",
+                placeholder: "Admin username"
+            });
+
+            var oEmailInput = new Input({
+                width: "100%",
+                type: "Email",
+                placeholder: "Admin email"
+            });
+
+            var oPasswordInput = new Input({
+                width: "100%",
+                type: "Password",
+                placeholder: "Admin password"
+            });
+
+            var oDialog = new Dialog({
+                title: "Create admin profile",
+                contentWidth: "480px",
+                stretchOnPhone: true,
+                content: [
+                    new VBox({
+                        width: "100%",
+                        items: [
+                            new Text({
+                                text: "To accept the admin invitation, complete the data for the new admin profile."
+                            }),
+                            oUsernameInput,
+                            oEmailInput,
+                            oPasswordInput
+                        ]
+                    })
+                ],
+                beginButton: new Button({
+                    text: "Create admin",
+                    press: async function () {
+                        var sAdminUsername = (oUsernameInput.getValue() || "").trim();
+                        var sAdminEmail = (oEmailInput.getValue() || "").trim();
+                        var sAdminPassword = (oPasswordInput.getValue() || "").trim();
+
+                        if (!sAdminUsername || !sAdminEmail || !sAdminPassword) {
+                            MessageBox.warning("All fields are required.");
+                            return;
+                        }
+
+                        try {
+                            await this._acceptAdminInvitation(oNotification, {
+                                adminUsername: sAdminUsername,
+                                adminEmail: sAdminEmail,
+                                adminPassword: sAdminPassword
+                            });
+                            oDialog.close();
+                        } catch (oError) {
+                            MessageBox.error("Cannot create admin profile: " + oError.message);
+                        }
+                    }.bind(this)
+                }),
+                endButton: new Button({
+                    text: "Cancel",
+                    press: function () {
+                        oDialog.close();
+                    }
+                }),
+                afterClose: function () {
+                    oDialog.destroy();
+                }
+            });
+
+            this.getView().addDependent(oDialog);
+            oDialog.open();
+        },
+
+        _acceptAdminInvitation: async function (oNotification, oPayload) {
+            var oResponse = await fetch("http://localhost:8080/api/admin-invitations/" + oNotification.invitationId + "/accept", {
+                method: "POST",
+                headers: this._getAuthHeaders(),
+                body: JSON.stringify(oPayload)
+            });
+
+            var sText = await oResponse.text();
+            if (!oResponse.ok) {
+                throw new Error(sText || "Cannot accept admin invitation");
+            }
+
+            await this._markNotificationAsRead(oNotification.id);
+            MessageToast.show("Admin profile created successfully.");
+            await this._loadDashboardData();
+        },
+
+        _rejectAdminInvitation: async function (oNotification) {
+            try {
+                var oResponse = await fetch("http://localhost:8080/api/admin-invitations/" + oNotification.invitationId + "/reject", {
+                    method: "POST",
+                    headers: this._getAuthHeaders()
+                });
+
+                var sText = await oResponse.text();
+                if (!oResponse.ok) {
+                    throw new Error(sText || "Cannot reject admin invitation");
+                }
+
+                await this._markNotificationAsRead(oNotification.id);
+                MessageToast.show("Admin invitation rejected successfully.");
+                await this._loadDashboardData();
+            } catch (oError) {
+                MessageBox.error("Cannot reject admin invitation: " + oError.message);
+            }
+        },
+
+        _markNotificationAsRead: async function (iNotificationId) {
+            if (!iNotificationId) {
+                return;
+            }
+
+            var oResponse = await fetch("http://localhost:8080/api/notifications/" + iNotificationId + "/read", {
+                method: "PATCH",
+                headers: this._getAuthHeaders()
+            });
+
+            if (oResponse.status === 401 || oResponse.status === 403) {
+                this._handleUnauthorized();
+                return;
+            }
+
+            if (!oResponse.ok) {
+                var sText = await oResponse.text();
+                throw new Error(sText || "Cannot mark notification as read");
+            }
+        },
+
+        onMarkAllNotificationsRead: async function () {
+            try {
+                var oResponse = await fetch("http://localhost:8080/api/notifications/read-all", {
+                    method: "PATCH",
+                    headers: this._getAuthHeaders()
+                });
+
+                var sText = await oResponse.text();
+                if (!oResponse.ok) {
+                    throw new Error(sText || "Cannot mark notifications as read");
+                }
+
+                MessageToast.show("All notifications marked as read.");
+                await this._loadDashboardData();
+            } catch (oError) {
+                MessageBox.error("Cannot mark notifications as read: " + oError.message);
+            }
+        },
+
+        formatNotificationActionsVisible: function (bActionable) {
+            return !!bActionable;
+        },
+
+        formatNotificationReadText: function (bIsRead) {
+            return bIsRead ? "Read" : "Unread";
+        },
+
+        formatNotificationReadState: function (bIsRead) {
+            return bIsRead ? "Success" : "Information";
+        },
+
+        formatNotificationDate: function (sCreatedAt) {
+            if (!sCreatedAt) {
+                return "";
+            }
+
+            var oDate = new Date(sCreatedAt);
+            if (isNaN(oDate.getTime())) {
+                return sCreatedAt;
+            }
+
+            return oDate.toLocaleString();
         },
 
         onLogout: function () {

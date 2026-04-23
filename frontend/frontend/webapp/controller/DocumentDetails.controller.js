@@ -415,7 +415,7 @@ sap.ui.define([
             });
 
             this._oAddMemberDialog = new Dialog({
-                title: "Добавяне на човек в екипа",
+                title: "Изпращане на покана към човек",
                 contentWidth: "560px",
                 contentHeight: "620px",
                 stretchOnPhone: true,
@@ -468,7 +468,7 @@ sap.ui.define([
                             }).addStyleClass("memberRoleButtonsWrapper"),
 
                             new Text({
-                                text: "Избери user"
+                                text: "Избери user за покана"
                             }).addStyleClass("memberDialogLabel"),
 
                             oList
@@ -476,7 +476,7 @@ sap.ui.define([
                     }).addStyleClass("memberDialogContent")
                 ],
                 beginButton: new Button({
-                    text: "Add",
+                    text: "Send invitation",
                     press: this.onAddMember.bind(this)
                 }),
                 endButton: new Button({
@@ -538,17 +538,16 @@ sap.ui.define([
             }
 
             if (oDocument.currentUserRole !== "OWNER") {
-                MessageBox.warning("Само owner може да добавя хора.");
+                MessageBox.warning("Само owner може да изпраща покани.");
                 return;
             }
 
             try {
-                var oResponse = await fetch("http://localhost:8080/api/documentMembers/createNewMember", {
+                var oResponse = await fetch("http://localhost:8080/api/invitations", {
                     method: "POST",
                     headers: this._getAuthHeaders(),
                     body: JSON.stringify({
                         documentId: oDocument.id,
-                        owner: oDocument.createdBy,
                         username: sUsername,
                         role: sRole
                     })
@@ -556,15 +555,13 @@ sap.ui.define([
 
                 var sText = await oResponse.text();
                 if (!oResponse.ok) {
-                    throw new Error(sText || "Cannot add member");
+                    throw new Error(sText || "Cannot send invitation");
                 }
 
-                MessageToast.show("Човекът е добавен успешно.");
+                MessageToast.show("Поканата е изпратена успешно.");
                 this._oAddMemberDialog.close();
-
-                await this._loadDocument(oDocument.id);
             } catch (oError) {
-                MessageBox.error("Неуспешно добавяне на човек: " + oError.message);
+                MessageBox.error("Неуспешно изпращане на покана: " + oError.message);
             }
         },
 
