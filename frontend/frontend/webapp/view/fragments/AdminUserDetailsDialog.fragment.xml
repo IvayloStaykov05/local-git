@@ -59,9 +59,9 @@
         </content>
 
         <buttons>
-            <Button
+           <Button
                 text="{= ${admin>/selectedUser/active} ? 'Deactivate' : 'Activate' }"
-                press=".onToggleUserActive"
+                press=".onToggleUserActiveStatus"
                 class="adminPrimaryDialogButton" />
 
             <Button

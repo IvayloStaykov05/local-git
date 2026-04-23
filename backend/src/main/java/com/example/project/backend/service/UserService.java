@@ -100,6 +100,8 @@ public class UserService {
                         user.getFirstName(),
                         user.getLastName(),
                         user.getEmail(),
+                        user.getSystemRole(),
+                        user.getMyInfo(),
                         user.isActive()
                 ))
                 .toList();
@@ -219,6 +221,8 @@ public class UserService {
                         user.getFirstName(),
                         user.getLastName(),
                         user.getEmail(),
+                        user.getSystemRole(),
+                        user.getMyInfo(),
                         user.isActive()
                 ))
                 .toList();
@@ -253,6 +257,8 @@ public class UserService {
                         user.getFirstName(),
                         user.getLastName(),
                         user.getEmail(),
+                        user.getSystemRole(),
+                        user.getMyInfo(),
                         user.isActive()
                 ))
                 .toList();

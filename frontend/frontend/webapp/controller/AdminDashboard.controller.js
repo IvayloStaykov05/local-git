@@ -389,66 +389,71 @@ sap.ui.define([
             }
         },
 
-        onToggleUserActiveStatus: async function () {
-            var oModel = this.getView().getModel("admin");
-            var oSelectedUser = oModel.getProperty("/selectedUser");
+       onToggleUserActiveStatus: async function () {
+    var oModel = this.getView().getModel("admin");
+    var oSelectedUser = oModel.getProperty("/selectedUser");
 
-            if (!oSelectedUser || !oSelectedUser.id) {
-                return;
-            }
+    if (!oSelectedUser || !oSelectedUser.id) {
+        return;
+    }
 
-            var bCurrentlyActive = !!oSelectedUser.active;
-            var sUrl = bCurrentlyActive
-                ? "http://localhost:8080/api/admin/users/deactivate"
-                : "http://localhost:8080/api/admin/users/activate";
+    var bCurrentlyActive = !!oSelectedUser.active;
+    var sUrl = bCurrentlyActive
+        ? "http://localhost:8080/api/admin/users/deactivate"
+        : "http://localhost:8080/api/admin/users/activate";
 
-            try {
-                const oResponse = await fetch(sUrl, {
-                    method: "PUT",
-                    headers: this._getAuthHeaders(),
-                    body: JSON.stringify({
-                        userId: oSelectedUser.id
-                    })
+    var sReason = bCurrentlyActive
+        ? "Deactivated by admin"
+        : "Activated by admin";
+
+    try {
+        const oResponse = await fetch(sUrl, {
+            method: "PATCH",
+            headers: this._getAuthHeaders(),
+            body: JSON.stringify({
+                userId: oSelectedUser.id,
+                reason: sReason
+            })
+        });
+
+        const sText = await oResponse.text();
+
+        if (oResponse.status === 401) {
+            this._handleUnauthorized();
+            return;
+        }
+
+        if (oResponse.status === 403) {
+            this._handleForbidden("You do not have permission to change user status.", false);
+            return;
+        }
+
+        if (!oResponse.ok) {
+            throw new Error(sText || "Cannot change user status");
+        }
+
+        var oResult = sText ? JSON.parse(sText) : {};
+        var bNewActive = !!oResult.active;
+
+        oModel.setProperty("/selectedUser/active", bNewActive);
+
+        var aUsers = oModel.getProperty("/users") || [];
+        aUsers = aUsers.map(function (oUser) {
+            if (oUser.id === oSelectedUser.id) {
+                return Object.assign({}, oUser, {
+                    active: bNewActive
                 });
-
-                const sText = await oResponse.text();
-
-                if (oResponse.status === 401) {
-                    this._handleUnauthorized();
-                    return;
-                }
-
-                if (oResponse.status === 403) {
-                    this._handleForbidden("You do not have permission to change user status.", false);
-                    return;
-                }
-
-                if (!oResponse.ok) {
-                    throw new Error(sText || "Cannot change user status");
-                }
-
-                var oResult = sText ? JSON.parse(sText) : {};
-                var bNewActive = !!oResult.active;
-
-                oModel.setProperty("/selectedUser/active", bNewActive);
-
-                var aUsers = oModel.getProperty("/users") || [];
-                aUsers = aUsers.map(function (oUser) {
-                    if (oUser.id === oSelectedUser.id) {
-                        return Object.assign({}, oUser, {
-                            active: bNewActive
-                        });
-                    }
-                    return oUser;
-                });
-
-                oModel.setProperty("/users", aUsers);
-
-                MessageToast.show(bNewActive ? "User activated successfully" : "User deactivated successfully");
-            } catch (oError) {
-                MessageBox.error("Cannot change user status: " + oError.message);
             }
-        },
+            return oUser;
+        });
+
+        oModel.setProperty("/users", aUsers);
+
+        MessageToast.show(bNewActive ? "User activated successfully" : "User deactivated successfully");
+    } catch (oError) {
+        MessageBox.error("Cannot change user status: " + oError.message);
+    }
+},
 
         onOpenCreateAdminDialog: async function () {
             try {
